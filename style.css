@@ -475,12 +475,19 @@ footer p {
     text-align: right;
 }
 
-/* Letter-Specific Colors */
-.ball.B, .current-ball-display.B { background-color: red; color: white; }
-.ball.I, .current-ball-display.I { background-color: yellow; color: black; }
-.ball.N, .current-ball-display.N { background-color: limegreen; color: black; } /* Using limegreen for better contrast */
-.ball.G, .current-ball-display.G { background-color: purple; color: white; }
-.ball.O, .current-ball-display.O { background-color: blue; color: white; }
+/* Letter-Specific Colors (Dark and Faded for Remaining Balls) */
+.ball.B { background-color: maroon; color: white; opacity: 0.4; }
+.ball.I { background-color: #8B4513; color: white; opacity: 0.4; } /* SaddleBrown */
+.ball.N { background-color: darkgreen; color: white; opacity: 0.4; }
+.ball.G { background-color: purple; color: white; opacity: 0.4; }
+.ball.O { background-color: navy; color: white; opacity: 0.4; }
+
+/* Current ball display keeps bright colors */
+.current-ball-display.B { background-color: red; color: white; }
+.current-ball-display.I { background-color: yellow; color: black; }
+.current-ball-display.N { background-color: limegreen; color: black; }
+.current-ball-display.G { background-color: purple; color: white; }
+.current-ball-display.O { background-color: blue; color: white; }
 
 /* Ensure current ball gradient works with new colors */
 .current-ball-display.B { background: linear-gradient(145deg, red, color-mix(in srgb, red 80%, black)); }
@@ -494,18 +501,18 @@ footer p {
     background-color: var(--ball-bg); /* Default if no letter class matches? Should not happen */
 }
 
-/* General style adjustments for called balls */
+/* General style adjustments for called balls - Ensure full opacity */
 .ball.called {
-    opacity: 0.8; /* Keep slightly faded */
+    opacity: 1; /* Make called balls fully opaque */
     font-weight: 400; /* Less emphasis */
     /* background-color and color will be overridden by specific letter rules below */
 }
 
-/* Darker colors for called balls */
-.ball.called.B { background-color: darkred; color: white; }
-.ball.called.I { background-color: #B8860B; color: white; } /* Using DarkGoldenrod with white text */
-.ball.called.N { background-color: forestgreen; color: white; }
-.ball.called.G { background-color: darkmagenta; color: white; }
-.ball.called.O { background-color: darkblue; color: white; }
+/* Brighter colors for called balls (History) - Ensure full opacity */
+.ball.called.B { background-color: red; color: white; opacity: 1; }
+.ball.called.I { background-color: yellow; color: black; opacity: 1; }
+.ball.called.N { background-color: limegreen; color: black; opacity: 1; }
+.ball.called.G { background-color: purple; color: white; opacity: 1; }
+.ball.called.O { background-color: blue; color: white; opacity: 1; }
 
 /* Removed Large Balls Mode Styles */
