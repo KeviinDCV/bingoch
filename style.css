@@ -1,0 +1,414 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+
+:root {
+    /* Light Theme (Default) */
+    --bg-color: #f4f7f9; /* Lighter gray */
+    --text-color: #333;
+    --card-bg: #ffffff;
+    --primary-color: #007bff;
+    --primary-color-darker: #0056b3;
+    --secondary-color: #6c757d;
+    --secondary-color-darker: #5a6268;
+    --accent-color: #ffc107; /* Example accent */
+    --border-color: #dee2e6;
+    --shadow-color: rgba(0, 0, 0, 0.1);
+    --ball-bg: #e9ecef;
+    --ball-text: #495057;
+    --ball-called-bg: #6c757d;
+    --ball-called-text: #ffffff;
+    --current-ball-bg: var(--primary-color);
+    --current-ball-text: #ffffff;
+
+    --ball-size: 40px;
+    --ball-font-size: 16px;
+    --current-ball-size: 110px; /* Slightly larger */
+    --current-ball-font-size: 40px; /* Slightly larger */
+
+    --transition-speed: 0.3s;
+}
+
+body.dark-mode {
+    /* Dark Theme Overrides */
+    --bg-color: #1a1a1a; /* Darker background */
+    --text-color: #e0e0e0; /* Lighter text */
+    --card-bg: #2c2c2c; /* Dark card background */
+    --primary-color: #4dabf7; /* Brighter blue for dark mode */
+    --primary-color-darker: #2196f3;
+    --secondary-color: #909090; /* Lighter gray */
+    --secondary-color-darker: #aaaaaa;
+    --accent-color: #ffca2c; /* Slightly brighter accent */
+    --border-color: #444; /* Darker border */
+    --shadow-color: rgba(0, 0, 0, 0.3); /* Darker shadow */
+    --ball-bg: #495057;
+    --ball-text: #e0e0e0;
+    --ball-called-bg: #909090;
+    --ball-called-text: #1a1a1a;
+    --current-ball-bg: var(--primary-color);
+    --current-ball-text: #1a1a1a; /* Dark text on bright blue */
+}
+
+/* General Styles & Transitions */
+body {
+    font-family: 'Poppins', sans-serif;
+    line-height: 1.6;
+    margin: 0;
+    padding: 20px;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    display: flex;
+    justify-content: center;
+    transition: background-color var(--transition-speed) ease, color var(--transition-speed) ease;
+}
+
+.container {
+    max-width: 950px; /* Slightly wider */
+    width: 100%;
+    background-color: var(--card-bg);
+    padding: 30px 40px; /* More horizontal padding */
+    border-radius: 12px; /* More rounded */
+    box-shadow: 0 4px 15px var(--shadow-color);
+    transition: background-color var(--transition-speed) ease;
+}
+
+h1, h2 {
+    text-align: center;
+    color: var(--primary-color);
+    margin-bottom: 1.2em;
+    font-weight: 600;
+    transition: color var(--transition-speed) ease;
+}
+
+h1 {
+    font-size: 2.5em; /* Larger title */
+    font-weight: 700;
+}
+
+h2 {
+    color: var(--secondary-color);
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 0.6em;
+    margin-top: 2em;
+    font-size: 1.5em;
+    transition: color var(--transition-speed) ease, border-color var(--transition-speed) ease;
+}
+
+/* Main Display & Current Ball */
+.main-display {
+    text-align: center;
+    margin-bottom: 2.5em;
+}
+
+.current-ball-display {
+    display: inline-flex;
+    flex-direction: column; /* Stack letter and number */
+    align-items: center;
+    justify-content: center;
+    width: var(--current-ball-size);
+    height: var(--current-ball-size);
+    border-radius: 50%;
+    background: linear-gradient(145deg, var(--current-ball-bg), color-mix(in srgb, var(--current-ball-bg) 80%, black)); /* Subtle gradient */
+    color: var(--current-ball-text);
+    font-size: var(--current-ball-font-size);
+    font-weight: 700;
+    margin-top: 0.5em;
+    box-shadow: 0 6px 12px var(--shadow-color), inset 0 2px 4px rgba(255, 255, 255, 0.2); /* Inner highlight */
+    transition: background var(--transition-speed) ease, color var(--transition-speed) ease, transform var(--transition-speed) ease;
+    animation: popIn 0.5s ease-out forwards; /* Pop-in animation */
+    transform: scale(0); /* Start scaled down for animation */
+}
+
+.current-ball-display span.letter {
+    font-size: 0.4em; /* Adjust relative size */
+    line-height: 1;
+    font-weight: 600;
+    opacity: 0.8;
+}
+
+@keyframes popIn {
+    to {
+        transform: scale(1);
+    }
+}
+
+/* Controls & Buttons */
+.controls, .theme-switcher {
+    text-align: center;
+    margin-bottom: 2em;
+}
+
+button {
+    padding: 12px 28px; /* Slightly more padding */
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    border-radius: 25px; /* Pill shape */
+    margin: 5px 10px;
+    background-color: var(--primary-color);
+    color: white; /* Always white for primary buttons */
+    transition: background-color var(--transition-speed) ease, transform 0.1s ease, box-shadow 0.2s ease;
+    box-shadow: 0 2px 5px var(--shadow-color);
+}
+
+button:hover {
+    background-color: var(--primary-color-darker);
+    box-shadow: 0 4px 8px var(--shadow-color);
+    transform: translateY(-2px); /* Slight lift */
+}
+
+button:active {
+    transform: translateY(0px); /* Press down */
+    box-shadow: 0 1px 3px var(--shadow-color);
+}
+
+#reset-button, #theme-toggle-button {
+    background-color: var(--secondary-color);
+    color: white; /* Always white for secondary buttons */
+}
+
+#reset-button:hover, #theme-toggle-button:hover {
+    background-color: var(--secondary-color-darker);
+}
+
+/* Settings Section */
+.settings {
+    background-color: color-mix(in srgb, var(--bg-color) 85%, var(--text-color) 5%); /* Slightly different background */
+    /* padding: 25px; Applied to content now */
+    border-radius: 8px;
+    margin-top: 2.5em; /* Added margin above settings */
+    margin-bottom: 2.5em;
+    border: 1px solid var(--border-color);
+    transition: background-color var(--transition-speed) ease, border-color var(--transition-speed) ease;
+}
+
+.settings-toggle {
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 25px; /* Padding on the toggle itself */
+    margin: 0; /* Reset margin */
+    border-bottom: none; /* Remove default h2 border */
+}
+
+.settings-toggle:hover {
+    background-color: color-mix(in srgb, var(--bg-color) 80%, var(--text-color) 10%);
+}
+
+.toggle-icon {
+    font-size: 1.2em;
+    font-weight: bold;
+    transition: transform 0.3s ease;
+}
+
+.settings-content {
+    padding: 0 25px 25px 25px; /* Padding inside the content area */
+    max-height: 1000px; /* Large enough for content */
+    overflow: hidden;
+    transition: max-height 0.5s ease-out, padding 0.5s ease-out;
+}
+
+.settings-content.collapsible:not(.expanded) {
+    max-height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    /* border-top: 1px solid var(--border-color); Add border when collapsed */
+}
+
+.settings-toggle .toggle-icon.expanded {
+     transform: rotate(45deg); /* Change '+' to 'x' or rotate */
+}
+
+
+.setting-item {
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.setting-item label {
+    min-width: 160px; /* Ensure alignment */
+    font-weight: 600;
+    color: var(--secondary-color);
+    transition: color var(--transition-speed) ease;
+}
+
+.setting-item select,
+.setting-item input[type="range"] {
+    flex-grow: 1;
+    padding: 8px 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    background-color: var(--card-bg); /* Match card background */
+    color: var(--text-color);
+    transition: background-color var(--transition-speed) ease, border-color var(--transition-speed) ease, color var(--transition-speed) ease;
+}
+
+/* Style range inputs */
+input[type="range"] {
+    cursor: pointer;
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 8px;
+    background: var(--border-color);
+    border-radius: 5px;
+    outline: none;
+}
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    background: var(--primary-color);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background-color var(--transition-speed) ease;
+}
+input[type="range"]::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    background: var(--primary-color);
+    border-radius: 50%;
+    cursor: pointer;
+    border: none; /* Reset default */
+    transition: background-color var(--transition-speed) ease;
+}
+
+/* Ball Grids */
+.ball-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(var(--ball-size), 1fr));
+    gap: 10px; /* Slightly more gap */
+    margin-top: 1.5em;
+}
+
+/* Adjust grid for smaller balls on mobile */
+@media (max-width: 480px) {
+    .ball-grid {
+        grid-template-columns: repeat(auto-fill, minmax(30px, 1fr)); /* Even smaller min size */
+        gap: 5px; /* Tighter gap */
+    }
+}
+
+
+.ball {
+    display: flex;
+    flex-direction: column; /* Stack letter and number */
+    align-items: center;
+    justify-content: center;
+    width: var(--ball-size);
+    height: var(--ball-size);
+    border-radius: 50%;
+    background-color: var(--ball-bg);
+    color: var(--ball-text);
+    font-size: var(--ball-font-size);
+    font-weight: 600;
+    text-align: center;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: background-color var(--transition-speed) ease, color var(--transition-speed) ease, opacity 0.4s ease;
+}
+
+.ball.called {
+    background-color: var(--ball-called-bg);
+    color: var(--ball-called-text);
+    opacity: 0.8; /* Slightly less faded */
+    font-weight: 400; /* Less emphasis */
+}
+
+/* Style for BINGO letters inside balls */
+.ball span.letter {
+    display: block;
+    font-size: 0.65em; /* Smaller font size for the letter */
+    line-height: 1;
+    font-weight: 400;
+    opacity: 0.7;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .container {
+        padding: 20px 15px; /* Less horizontal padding */
+    }
+    h1 {
+        font-size: 2em;
+    }
+    h2 {
+        font-size: 1.3em;
+    }
+    :root {
+        --current-ball-size: 90px;
+        --current-ball-font-size: 32px;
+    }
+    .setting-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .setting-item label {
+        min-width: auto;
+        margin-bottom: 5px;
+    }
+    .setting-item select,
+    .setting-item input[type="range"] {
+        width: 100%;
+    }
+
+    /* Collapse settings by default on mobile */
+    .settings-content.collapsible:not(.expanded) {
+        max-height: 0;
+        padding-top: 0;
+        padding-bottom: 0;
+    }
+    .settings-toggle {
+         padding: 10px 15px; /* Less padding on toggle */
+    }
+     .settings-content {
+         padding: 0 15px 15px 15px; /* Less padding inside */
+     }
+
+     /* Larger buttons on mobile */
+     .controls button {
+         padding: 12px 25px; /* Increase padding slightly */
+         margin: 8px 5px; /* More vertical margin */
+     }
+}
+
+@media (max-width: 480px) {
+    body {
+        padding: 5px; /* Less body padding */
+    }
+    .container {
+        padding: 15px 10px; /* Even less horizontal padding */
+    }
+    h1 {
+        font-size: 1.8em;
+    }
+    :root {
+        --ball-size: 30px; /* Further reduce ball size */
+        --ball-font-size: 12px; /* Adjust font size */
+        --current-ball-size: 75px; /* Slightly smaller current ball */
+        --current-ball-font-size: 26px;
+    }
+    button {
+        padding: 10px 20px;
+        font-size: 14px;
+        margin: 5px;
+    }
+    /* .ball-grid adjustments moved to a separate block above */
+}
+
+/* Footer Styling */
+footer {
+    text-align: center;
+    margin-top: 3em; /* Space above footer */
+    padding-top: 1em;
+    border-top: 1px solid var(--border-color);
+    font-size: 0.9em;
+    color: var(--secondary-color);
+    transition: color var(--transition-speed) ease, border-color var(--transition-speed) ease;
+}
+
+footer p {
+    margin: 0;
+}
