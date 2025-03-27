@@ -14,12 +14,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const remainingBallsContainer = document.getElementById('remaining-balls');
     const remainingCountSpan = document.getElementById('remaining-count');
     const themeToggleButton = document.getElementById('theme-toggle-button');
-    const settingsToggle = document.querySelector('.settings-toggle'); // Added
-    const settingsContent = document.querySelector('.settings-content'); // Added
-    const toggleIcon = document.querySelector('.toggle-icon'); // Added
+    const settingsToggle = document.querySelector('.settings-toggle');
+    const settingsContent = document.querySelector('.settings-content');
+    const toggleIcon = document.querySelector('.toggle-icon');
+    const letterCheckboxes = document.querySelectorAll('.letter-checkboxes input[type="checkbox"]'); // Added
 
     // Game State
-    let allBalls = [];
+    let allBalls = []; // Will be populated based on active letters
     let remainingBalls = [];
     let calledBalls = [];
     let isRunning = false;
@@ -32,6 +33,16 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentRate = 1;
     let currentPitch = 1;
     let currentInterval = 5;
+    let activeLetters = { B: true, I: true, N: true, G: true, O: true }; // Added
+
+    // Letter Ranges
+    const letterRanges = {
+        B: { min: 1, max: 15 },
+        I: { min: 16, max: 30 },
+        N: { min: 31, max: 45 },
+        G: { min: 46, max: 60 },
+        O: { min: 61, max: 75 }
+    };
 
     // --- Theme Management ---
 
@@ -61,7 +72,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (prefersDark) {
             applyTheme('dark');
         } else {
-            applyTheme('light'); // Default to light
+            applyTheme('light');
         }
     }
 
@@ -69,45 +80,65 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function toggleSettings() {
         const isExpanded = settingsContent.classList.toggle('expanded');
-        toggleIcon.textContent = isExpanded ? '−' : '+'; // Change icon
+        toggleIcon.textContent = isExpanded ? '−' : '+';
         toggleIcon.classList.toggle('expanded', isExpanded);
-        // Optional: Save state if needed
-        // localStorage.setItem('settingsExpanded', isExpanded);
     }
 
     function initializeSettingsCollapse() {
-         // Check if screen is small (e.g., less than 768px)
          const isMobile = window.innerWidth < 768;
-         // Optional: Load saved state
-         // const savedState = localStorage.getItem('settingsExpanded') === 'true';
-         // if (savedState) {
-         //    settingsContent.classList.add('expanded');
-         //    toggleIcon.textContent = '−';
-         //    toggleIcon.classList.add('expanded');
-         // } else if (!isMobile) { // Expand by default on desktop if no saved state
-         if (!isMobile) { // Expand by default on desktop
+         if (!isMobile) {
              settingsContent.classList.add('expanded');
              toggleIcon.textContent = '−';
              toggleIcon.classList.add('expanded');
-         } else { // Collapsed by default on mobile
+         } else {
              toggleIcon.textContent = '+';
          }
     }
 
-
     // --- Initialization ---
 
     function initializeGame() {
-        allBalls = Array.from({ length: 75 }, (_, i) => i + 1);
-        resetGame();
+        // Load settings that affect ball generation first
         loadSettings();
+        // Generate initial ball list based on loaded active letters
+        generateBallList();
+        // Reset game state using the generated list
+        resetGame();
+        // Load visual/audio settings
         loadInitialTheme();
-        initializeSettingsCollapse(); // Initialize collapse state
+        initializeSettingsCollapse();
         populateVoiceList();
         if (speechSynthesis.onvoiceschanged !== undefined) {
             speechSynthesis.onvoiceschanged = populateVoiceList;
         }
     }
+
+    // Generates the allBalls array based on activeLetters state
+    function generateBallList() {
+        allBalls = [];
+        for (const letter in activeLetters) {
+            if (activeLetters[letter]) {
+                const range = letterRanges[letter];
+                for (let i = range.min; i <= range.max; i++) {
+                    allBalls.push(i);
+                }
+            }
+        }
+         // Handle case where no letters are selected (prevent empty game)
+         if (allBalls.length === 0) {
+             console.warn("No letters selected. Defaulting to all letters.");
+             // Temporarily activate all for this round, but don't save
+             for (const letter in letterRanges) {
+                 const range = letterRanges[letter];
+                 for (let i = range.min; i <= range.max; i++) {
+                     allBalls.push(i);
+                 }
+             }
+             // Optionally, re-check all checkboxes visually? Or show a message?
+             // For now, just proceed with all balls for this session.
+         }
+    }
+
 
     function resetGame() {
         if (intervalId) clearInterval(intervalId);
@@ -116,26 +147,28 @@ document.addEventListener('DOMContentLoaded', () => {
         intervalId = null;
         currentUtterance = null;
         startPauseButton.textContent = 'Start';
-        startPauseButton.disabled = false;
+        startPauseButton.disabled = allBalls.length === 0; // Disable if no balls generated
 
+        // Use the currently generated allBalls list
         remainingBalls = [...allBalls];
         calledBalls = [];
 
         currentBallDisplay.innerHTML = '-';
         currentBallDisplay.className = 'current-ball-display';
-        updateRemainingBallsUI();
+        updateRemainingBallsUI(); // Update based on potentially filtered list
         updateCalledBallsUI();
-        remainingCountSpan.textContent = remainingBalls.length;
+        remainingCountSpan.textContent = remainingBalls.length; // Update count based on filtered list
     }
 
     // --- BINGO Logic ---
 
     function getBingoLetter(number) {
-        if (number >= 1 && number <= 15) return 'B';
-        if (number >= 16 && number <= 30) return 'I';
-        if (number >= 31 && number <= 45) return 'N';
-        if (number >= 46 && number <= 60) return 'G';
-        if (number >= 61 && number <= 75) return 'O';
+        for (const letter in letterRanges) {
+            const range = letterRanges[letter];
+            if (number >= range.min && number <= range.max) {
+                return letter;
+            }
+        }
         return '';
     }
 
@@ -143,7 +176,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updateRemainingBallsUI() {
         remainingBallsContainer.innerHTML = '';
-        // Sort remaining balls numerically for consistent display
         [...remainingBalls].sort((a, b) => a - b).forEach(ballNum => {
             remainingBallsContainer.appendChild(createBallElement(ballNum));
         });
@@ -152,8 +184,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updateCalledBallsUI() {
         calledBallsContainer.innerHTML = '';
-        // Display called balls in the order they were drawn (no sorting)
-        calledBalls.forEach(ballNum => {
+        calledBalls.forEach(ballNum => { // No sorting here
             calledBallsContainer.appendChild(createBallElement(ballNum, true));
         });
     }
@@ -264,6 +295,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Settings Management ---
 
     function loadSettings() {
+        // Load audio/interval settings
         currentRate = parseFloat(localStorage.getItem('bingoRate') || '1');
         currentPitch = parseFloat(localStorage.getItem('bingoPitch') || '1');
         currentInterval = parseInt(localStorage.getItem('bingoInterval') || '5', 10);
@@ -274,18 +306,44 @@ document.addEventListener('DOMContentLoaded', () => {
         pitchValueSpan.textContent = currentPitch;
         intervalSlider.value = currentInterval;
         intervalValueSpan.textContent = currentInterval;
+
+        // Load active letters state
+        const savedLetters = localStorage.getItem('bingoActiveLetters');
+        if (savedLetters) {
+            try {
+                activeLetters = JSON.parse(savedLetters);
+            } catch (e) {
+                console.error("Failed to parse saved active letters", e);
+                // Fallback to default if parsing fails
+                activeLetters = { B: true, I: true, N: true, G: true, O: true };
+            }
+        } else {
+             // Default if nothing saved
+             activeLetters = { B: true, I: true, N: true, G: true, O: true };
+        }
+
+
+        // Update checkboxes based on loaded state
+        letterCheckboxes.forEach(checkbox => {
+            const letter = checkbox.dataset.letter;
+            checkbox.checked = activeLetters[letter];
+        });
     }
 
     function saveSettings() {
+        // Save audio/interval
         localStorage.setItem('bingoRate', currentRate);
         localStorage.setItem('bingoPitch', currentPitch);
         localStorage.setItem('bingoInterval', currentInterval);
+        // Save voice index
         if (selectedVoice) {
             const voiceIndex = voices.findIndex(v => v.name === selectedVoice.name && v.lang === selectedVoice.lang);
             if (voiceIndex !== -1) {
                 localStorage.setItem('bingoVoiceIndex', voiceIndex);
             }
         }
+        // Save active letters state
+        localStorage.setItem('bingoActiveLetters', JSON.stringify(activeLetters));
     }
 
     // --- Game Flow ---
@@ -348,15 +406,41 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isRunning) {
             pauseGame();
         } else {
-            startGame();
+             // Regenerate ball list in case letters changed while paused
+             generateBallList();
+             // Only start if there are balls available with current settings
+             if (allBalls.length > 0) {
+                 // If calledBalls is not empty, it means we are resuming, don't reset called list
+                 if (calledBalls.length === 0) {
+                     remainingBalls = [...allBalls]; // Fresh start
+                 } else {
+                     // Resuming: filter allBalls to get remaining ones
+                     remainingBalls = allBalls.filter(ball => !calledBalls.includes(ball));
+                 }
+                 updateRemainingBallsUI(); // Update UI before starting
+                 if (remainingBalls.length > 0) {
+                     startPauseButton.disabled = false;
+                     startGame();
+                 } else {
+                      startPauseButton.disabled = true; // No balls left to draw
+                 }
+             } else {
+                 alert("No letters selected. Please select at least one letter in the settings.");
+                 startPauseButton.disabled = true;
+             }
         }
     });
 
-    resetButton.addEventListener('click', resetGame);
+    resetButton.addEventListener('click', () => {
+         // Regenerate ball list based on current checkbox state before resetting
+         generateBallList();
+         resetGame();
+    });
+
 
     themeToggleButton.addEventListener('click', toggleTheme);
 
-    settingsToggle.addEventListener('click', toggleSettings); // Added listener for collapse
+    settingsToggle.addEventListener('click', toggleSettings);
 
     voiceSelect.addEventListener('change', (e) => {
         selectedVoice = voices[e.target.value];
@@ -384,6 +468,19 @@ document.addEventListener('DOMContentLoaded', () => {
             startGame();
         }
     });
+
+    // Listener for letter checkboxes
+    letterCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', (e) => {
+            const letter = e.target.dataset.letter;
+            activeLetters[letter] = e.target.checked;
+            saveSettings();
+            // Regenerate ball list and reset the game to apply changes
+            generateBallList();
+            resetGame();
+        });
+    });
+
 
     // --- Initial Load ---
     initializeGame();

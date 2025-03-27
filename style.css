@@ -245,6 +245,19 @@ button:active {
     transition: background-color var(--transition-speed) ease, border-color var(--transition-speed) ease, color var(--transition-speed) ease;
 }
 
+.letter-toggle .letter-checkboxes {
+    display: flex;
+    gap: 15px; /* Space between checkboxes */
+    flex-wrap: wrap; /* Allow wrapping on small screens */
+}
+
+.letter-toggle label { /* Style for individual checkbox labels */
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+}
+
 /* Style range inputs */
 input[type="range"] {
     cursor: pointer;
@@ -349,10 +362,21 @@ input[type="range"]::-moz-range-thumb {
         min-width: auto;
         margin-bottom: 5px;
     }
-    .setting-item select,
-    .setting-item input[type="range"] {
-        width: 100%;
+    .setting-item select {
+         width: 100%; /* Make select full width too */
     }
+    /* Add padding to slider items on mobile */
+    .setting-item input[type="range"] {
+        width: calc(100% - 20px); /* Reduce width to allow padding */
+        margin: 0 10px; /* Add horizontal margin */
+    }
+    /* Adjust label alignment for sliders */
+     .setting-item label[for*="-slider"] {
+         width: 100%; /* Make label full width */
+         text-align: center; /* Center label text */
+         margin-bottom: 8px; /* Add space below label */
+     }
+
 
     /* Collapse settings by default on mobile */
     .settings-content.collapsible:not(.expanded) {
