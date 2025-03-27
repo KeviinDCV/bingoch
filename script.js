@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const toggleIcon = document.querySelector('.toggle-icon');
     const letterCheckboxes = document.querySelectorAll('.letter-checkboxes input[type="checkbox"]'); // Added
     const countdownTimerSpan = document.getElementById('countdown-timer'); // Added for countdown
-    const largeBallsToggle = document.getElementById('large-balls-toggle'); // Added for large balls mode
+    // Removed largeBallsToggle reference
 
     // Game State
     let allBalls = []; // Will be populated based on active letters
@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentPitch = 1;
     let currentInterval = 5;
     let activeLetters = { B: true, I: true, N: true, G: true, O: true }; // Added
-    let isLargeBallsMode = false; // Added for large balls mode
+    // Removed isLargeBallsMode variable
 
     // Letter Ranges
     const letterRanges = {
@@ -113,7 +113,7 @@ document.addEventListener('DOMContentLoaded', () => {
         loadInitialTheme();
         initializeSettingsCollapse();
         populateVoiceList();
-        applyLargeBallsMode(); // Apply mode after loading settings
+        // Removed applyLargeBallsMode call
         if (speechSynthesis.onvoiceschanged !== undefined) {
             speechSynthesis.onvoiceschanged = populateVoiceList;
         }
@@ -341,20 +341,10 @@ document.addEventListener('DOMContentLoaded', () => {
             checkbox.checked = activeLetters[letter];
         });
 
-        // Load large balls mode state
-        isLargeBallsMode = localStorage.getItem('bingoLargeBallsMode') === 'true';
-        largeBallsToggle.checked = isLargeBallsMode; // Sync checkbox on load
+        // Removed large balls mode loading
     }
 
-    // Applies or removes the CSS class for large balls mode
-    function applyLargeBallsMode() {
-        if (isLargeBallsMode) {
-            document.body.classList.add('large-balls-mode');
-        } else {
-            document.body.classList.remove('large-balls-mode');
-        }
-        // Checkbox state is synced in loadSettings and the event listener
-    }
+    // Removed applyLargeBallsMode function
 
 
     function saveSettings() {
@@ -371,8 +361,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         // Save active letters state
         localStorage.setItem('bingoActiveLetters', JSON.stringify(activeLetters));
-        // Save large balls mode state
-        localStorage.setItem('bingoLargeBallsMode', isLargeBallsMode);
+        // Removed large balls mode saving
     }
 
     // --- Game Flow ---
@@ -394,34 +383,59 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // After drawing, if game should continue, start the countdown for the next ball
         if (remainingBalls.length > 0 && isRunning) {
+            console.log("drawBall: Calling startCountdown() for next ball."); // Log 5
             startCountdown();
         } else if (remainingBalls.length === 0) {
             stopGame(); // Stop immediately if last ball was drawn
         }
     }
 
-    // Starts the visual countdown timer
-    function startCountdown() {
+    // Starts the visual countdown timer, optionally resuming from a specific value
+    function startCountdown(resumeValue = null) {
+        console.log("startCountdown called. resumeValue:", resumeValue); // Log 6
         if (intervalId) clearInterval(intervalId); // Clear any existing countdown interval
+        intervalId = null; // Ensure it's null before setting again
 
-        countdownValue = currentInterval;
+        // Use resumeValue if provided and valid, otherwise start from full interval.
+        // Ensure countdownValue is at least 0 if resuming.
+        countdownValue = (resumeValue !== null) ? Math.max(0, resumeValue) : currentInterval;
         countdownTimerSpan.textContent = countdownValue;
 
-        intervalId = setInterval(() => {
+        // If the countdown is already zero or less when starting/resuming, draw immediately
+        // but use setTimeout to avoid potential stack overflow if drawBall calls startCountdown right back.
+        if (countdownValue <= 0 && isRunning) {
+            console.log("startCountdown: countdownValue <= 0, drawing immediately via setTimeout.");
+            setTimeout(() => {
+                // Double-check isRunning inside timeout, as state might change quickly
+                if (isRunning) drawBall();
+            }, 0); // Minimal delay
+            return; // Don't start interval if we're drawing immediately
+        }
+
+        // Only start the interval if the game is running and there's time left on the countdown
+        if (isRunning && countdownValue > 0) {
+            console.log("startCountdown: Starting setInterval. countdownValue:", countdownValue); // Log 7
+            intervalId = setInterval(() => {
             countdownValue--;
             countdownTimerSpan.textContent = countdownValue;
             if (countdownValue <= 0) {
                 clearInterval(intervalId); // Stop this countdown
                 intervalId = null;
                 if (isRunning) { // Only draw if still running
+                    console.log("startCountdown interval: Countdown reached 0, calling drawBall.");
                     drawBall(); // Draw the next ball
                 }
             }
         }, 1000); // Tick every second
-    }
+      } // Closing brace for the 'if (isRunning && countdownValue > 0)' block
+    } // Closing brace for the startCountdown function
 
 
     function startGame() {
+        // This function seems redundant now as the logic is handled in the button listener and drawBall/startCountdown
+        // Let's keep it for potential future structure but ensure it's not causing issues.
+        // It should NOT be called directly when resuming.
+        console.warn("startGame function called - this might be unexpected unless it's a very specific scenario.");
         if (isRunning || remainingBalls.length === 0) return;
 
         isRunning = true;
@@ -432,6 +446,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function pauseGame() {
+        console.log("pauseGame called.");
         if (!isRunning) return;
 
         isRunning = false;
@@ -447,6 +462,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function stopGame() {
+        console.log("stopGame called.");
         // Clear the countdown interval
         if (intervalId) clearInterval(intervalId);
         intervalId = null;
@@ -464,9 +480,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Event Listeners ---
 
     startPauseButton.addEventListener('click', () => {
+        console.log("Start/Pause button clicked. isRunning:", isRunning); // Log 1
         if (isRunning) {
             pauseGame();
         } else {
+             console.log("Attempting to start or resume."); // Log 2
              // Regenerate ball list in case letters changed while paused
              generateBallList();
              // Only start if there are balls available with current settings
@@ -479,9 +497,22 @@ document.addEventListener('DOMContentLoaded', () => {
                      remainingBalls = allBalls.filter(ball => !calledBalls.includes(ball));
                  }
                  updateRemainingBallsUI(); // Update UI before starting
+
                  if (remainingBalls.length > 0) {
                      startPauseButton.disabled = false;
-                     startGame();
+                     isRunning = true; // Set running state
+                     startPauseButton.textContent = 'Pause'; // Update button text
+
+                     // If calledBalls is empty, it's a fresh start: draw the first ball.
+                     // drawBall() will then call startCountdown() for the *next* ball.
+                     if (calledBalls.length === 0) {
+                         console.log("Button Listener: Fresh start, calling drawBall()."); // Log 3
+                         drawBall();
+                     } else {
+                         // Resume: Start the countdown directly from the paused value.
+                         console.log("Button Listener: Resuming, calling startCountdown with value:", countdownValue); // Log 4
+                         startCountdown(countdownValue);
+                     }
                  } else {
                       startPauseButton.disabled = true; // No balls left to draw
                  }
@@ -525,13 +556,13 @@ document.addEventListener('DOMContentLoaded', () => {
         intervalValueSpan.textContent = currentInterval;
         saveSettings();
         // If the game is running, clear the old interval and start a new countdown
-        // with the updated interval value immediately (after the current tick finishes).
+        // If the game is running, pause it before changing the interval.
+        // The user will need to press Start again to resume with the new interval.
         if (isRunning) {
-            // Clear existing countdown
-            if (intervalId) clearInterval(intervalId);
-            intervalId = null;
-            // Start a new countdown immediately with the new interval
-            startCountdown();
+            console.log("Interval slider changed while running, pausing game.");
+            pauseGame();
+            // Optionally, display a message or visually indicate that the interval changed
+            // and the game needs to be resumed manually? For now, just pausing.
         } else {
              // If paused, just update the display if needed, countdown will use new value on resume
              // Or maybe update the displayed value even if paused?
@@ -556,12 +587,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Listener for large balls toggle
-    largeBallsToggle.addEventListener('change', (e) => {
-        isLargeBallsMode = e.target.checked;
-        applyLargeBallsMode();
-        saveSettings();
-    });
+    // Removed large balls toggle listener
 
 
     // --- Initial Load ---

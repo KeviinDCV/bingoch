@@ -349,11 +349,21 @@ input[type="range"]::-moz-range-thumb {
         font-size: 2em;
     }
     h2 {
-        font-size: 1.3em;
+    font-size: 1.3em;
     }
+    /* Apply desktop ball sizes to mobile view (768px and below) */
     :root {
-        --current-ball-size: 90px;
-        --current-ball-font-size: 32px;
+        /* Keep current ball slightly smaller than desktop for better fit */
+        --current-ball-size: 110px; /* Reverted from 90px, but smaller than desktop's 138px */
+        --current-ball-font-size: 40px; /* Reverted from 32px, smaller than desktop's 50px */
+        /* Use desktop's regular ball size */
+        --ball-size: 50px;
+        --ball-font-size: 20px;
+    }
+    .ball-grid {
+        /* Adjust grid columns for 50px balls */
+        grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
+        gap: 8px; /* Adjust gap */
     }
     .setting-item {
         flex-direction: column;
@@ -407,13 +417,21 @@ input[type="range"]::-moz-range-thumb {
         padding: 15px 10px; /* Even less horizontal padding */
     }
     h1 {
-        font-size: 1.8em;
+    font-size: 1.8em;
     }
+    /* Apply desktop ball sizes to small mobile view (480px and below) */
     :root {
-        --ball-size: 30px; /* Further reduce ball size */
-        --ball-font-size: 12px; /* Adjust font size */
-        --current-ball-size: 75px; /* Slightly smaller current ball */
-        --current-ball-font-size: 26px;
+        /* Keep current ball slightly smaller */
+        --current-ball-size: 90px; /* Smaller than 768px view */
+        --current-ball-font-size: 32px; /* Smaller than 768px view */
+        /* Use desktop's regular ball size */
+        --ball-size: 50px;
+        --ball-font-size: 20px;
+    }
+     .ball-grid {
+        /* Adjust grid columns for 50px balls */
+        grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
+        gap: 5px; /* Tighter gap for small screens */
     }
     button {
         padding: 10px 20px;
@@ -490,27 +508,4 @@ footer p {
 .ball.called.G { background-color: darkmagenta; color: white; }
 .ball.called.O { background-color: darkblue; color: white; }
 
-
-/* Large Balls Mode Styles */
-body.large-balls-mode {
-    /* Significantly increase ball sizes */
-    --ball-size: 80px;
-    --ball-font-size: 32px;
-    --current-ball-size: 220px;
-    --current-ball-font-size: 80px;
-}
-
-/* Adjust grid gap for large balls mode */
-body.large-balls-mode .ball-grid {
-    gap: 15px; /* Increase gap slightly */
-}
-
-/* Adjust current ball letter size in large mode */
-body.large-balls-mode .current-ball-display span.letter {
-    font-size: 0.35em; /* May need further adjustment */
-}
-
-/* Adjust regular ball letter size in large mode */
-body.large-balls-mode .ball span.letter {
-    font-size: 0.55em; /* May need further adjustment */
-}
+/* Removed Large Balls Mode Styles */
