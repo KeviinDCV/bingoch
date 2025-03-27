@@ -18,13 +18,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const settingsContent = document.querySelector('.settings-content');
     const toggleIcon = document.querySelector('.toggle-icon');
     const letterCheckboxes = document.querySelectorAll('.letter-checkboxes input[type="checkbox"]'); // Added
+    const countdownTimerSpan = document.getElementById('countdown-timer'); // Added for countdown
+    const largeBallsToggle = document.getElementById('large-balls-toggle'); // Added for large balls mode
 
     // Game State
     let allBalls = []; // Will be populated based on active letters
     let remainingBalls = [];
     let calledBalls = [];
     let isRunning = false;
-    let intervalId = null;
+    let intervalId = null; // Will be used for the 1-second countdown tick
+    let countdownValue = 0; // Stores the current countdown seconds
+    let drawBallTimeoutId = null; // Timeout for the next ball draw (alternative to interval)
     let currentUtterance = null;
 
     // Settings State
@@ -34,6 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentPitch = 1;
     let currentInterval = 5;
     let activeLetters = { B: true, I: true, N: true, G: true, O: true }; // Added
+    let isLargeBallsMode = false; // Added for large balls mode
 
     // Letter Ranges
     const letterRanges = {
@@ -108,6 +113,7 @@ document.addEventListener('DOMContentLoaded', () => {
         loadInitialTheme();
         initializeSettingsCollapse();
         populateVoiceList();
+        applyLargeBallsMode(); // Apply mode after loading settings
         if (speechSynthesis.onvoiceschanged !== undefined) {
             speechSynthesis.onvoiceschanged = populateVoiceList;
         }
@@ -141,13 +147,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     function resetGame() {
+        // Clear both potential timers/intervals
         if (intervalId) clearInterval(intervalId);
+        if (drawBallTimeoutId) clearTimeout(drawBallTimeoutId);
         if (currentUtterance) speechSynthesis.cancel();
+
         isRunning = false;
         intervalId = null;
+        drawBallTimeoutId = null;
+        countdownValue = 0;
         currentUtterance = null;
         startPauseButton.textContent = 'Start';
         startPauseButton.disabled = allBalls.length === 0; // Disable if no balls generated
+        countdownTimerSpan.textContent = '--'; // Reset countdown display
 
         // Use the currently generated allBalls list
         remainingBalls = [...allBalls];
@@ -328,7 +340,22 @@ document.addEventListener('DOMContentLoaded', () => {
             const letter = checkbox.dataset.letter;
             checkbox.checked = activeLetters[letter];
         });
+
+        // Load large balls mode state
+        isLargeBallsMode = localStorage.getItem('bingoLargeBallsMode') === 'true';
+        largeBallsToggle.checked = isLargeBallsMode; // Sync checkbox on load
     }
+
+    // Applies or removes the CSS class for large balls mode
+    function applyLargeBallsMode() {
+        if (isLargeBallsMode) {
+            document.body.classList.add('large-balls-mode');
+        } else {
+            document.body.classList.remove('large-balls-mode');
+        }
+        // Checkbox state is synced in loadSettings and the event listener
+    }
+
 
     function saveSettings() {
         // Save audio/interval
@@ -344,6 +371,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         // Save active letters state
         localStorage.setItem('bingoActiveLetters', JSON.stringify(activeLetters));
+        // Save large balls mode state
+        localStorage.setItem('bingoLargeBallsMode', isLargeBallsMode);
     }
 
     // --- Game Flow ---
@@ -363,20 +392,43 @@ document.addEventListener('DOMContentLoaded', () => {
         updateCalledBallsUI();
         speakBall(drawnBall);
 
-        if (remainingBalls.length === 0) {
-            stopGame();
+        // After drawing, if game should continue, start the countdown for the next ball
+        if (remainingBalls.length > 0 && isRunning) {
+            startCountdown();
+        } else if (remainingBalls.length === 0) {
+            stopGame(); // Stop immediately if last ball was drawn
         }
     }
+
+    // Starts the visual countdown timer
+    function startCountdown() {
+        if (intervalId) clearInterval(intervalId); // Clear any existing countdown interval
+
+        countdownValue = currentInterval;
+        countdownTimerSpan.textContent = countdownValue;
+
+        intervalId = setInterval(() => {
+            countdownValue--;
+            countdownTimerSpan.textContent = countdownValue;
+            if (countdownValue <= 0) {
+                clearInterval(intervalId); // Stop this countdown
+                intervalId = null;
+                if (isRunning) { // Only draw if still running
+                    drawBall(); // Draw the next ball
+                }
+            }
+        }, 1000); // Tick every second
+    }
+
 
     function startGame() {
         if (isRunning || remainingBalls.length === 0) return;
 
         isRunning = true;
         startPauseButton.textContent = 'Pause';
+        // Draw the first ball immediately
         drawBall();
-        if (remainingBalls.length > 0) {
-            intervalId = setInterval(drawBall, currentInterval * 1000);
-        }
+        // The countdown for the *next* ball is started within drawBall if needed
     }
 
     function pauseGame() {
@@ -384,20 +436,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
         isRunning = false;
         startPauseButton.textContent = 'Start';
+        // Clear the countdown interval
         if (intervalId) clearInterval(intervalId);
-        if (currentUtterance) speechSynthesis.cancel();
         intervalId = null;
+        // Stop any pending speech
+        if (currentUtterance) speechSynthesis.cancel();
         currentUtterance = null;
+        // Keep the current countdown value displayed, or reset? Let's reset for clarity.
+        // countdownTimerSpan.textContent = '--'; // Or show paused state? Keep value for now.
     }
 
     function stopGame() {
+        // Clear the countdown interval
         if (intervalId) clearInterval(intervalId);
-        isRunning = false;
         intervalId = null;
+
+        isRunning = false;
         startPauseButton.textContent = 'Start';
+        countdownTimerSpan.textContent = '--'; // Reset countdown display
+
         if (remainingBalls.length === 0) {
              startPauseButton.disabled = true;
         }
+        // Note: We don't clear remainingBalls or calledBalls here, resetGame does that.
     }
 
     // --- Event Listeners ---
@@ -463,9 +524,23 @@ document.addEventListener('DOMContentLoaded', () => {
         currentInterval = parseInt(e.target.value, 10);
         intervalValueSpan.textContent = currentInterval;
         saveSettings();
+        // If the game is running, clear the old interval and start a new countdown
+        // with the updated interval value immediately (after the current tick finishes).
         if (isRunning) {
-            pauseGame();
-            startGame();
+            // Clear existing countdown
+            if (intervalId) clearInterval(intervalId);
+            intervalId = null;
+            // Start a new countdown immediately with the new interval
+            startCountdown();
+        } else {
+             // If paused, just update the display if needed, countdown will use new value on resume
+             // Or maybe update the displayed value even if paused?
+             // Let's update the display if paused but not running countdown
+             if (countdownTimerSpan.textContent !== '--') {
+                 // If showing a number, update it? Or wait for resume?
+                 // Let's just ensure the next countdown uses the new value.
+                 // No immediate action needed if paused.
+             }
         }
     });
 
@@ -479,6 +554,13 @@ document.addEventListener('DOMContentLoaded', () => {
             generateBallList();
             resetGame();
         });
+    });
+
+    // Listener for large balls toggle
+    largeBallsToggle.addEventListener('change', (e) => {
+        isLargeBallsMode = e.target.checked;
+        applyLargeBallsMode();
+        saveSettings();
     });
 
 

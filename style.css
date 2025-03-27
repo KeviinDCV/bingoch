@@ -19,10 +19,11 @@
     --current-ball-bg: var(--primary-color);
     --current-ball-text: #ffffff;
 
-    --ball-size: 40px;
-    --ball-font-size: 16px;
-    --current-ball-size: 110px; /* Slightly larger */
-    --current-ball-font-size: 40px; /* Slightly larger */
+    /* Increased sizes by ~25% */
+    --ball-size: 50px;
+    --ball-font-size: 20px;
+    --current-ball-size: 138px;
+    --current-ball-font-size: 50px;
 
     --transition-speed: 0.3s;
 }
@@ -435,4 +436,81 @@ footer {
 
 footer p {
     margin: 0;
+}
+
+/* Countdown Timer Styles */
+#countdown-container {
+    margin-top: 15px; /* Space below the current ball */
+    font-size: 1.1em;
+    color: var(--secondary-color);
+    text-align: center;
+    transition: color var(--transition-speed) ease;
+    height: 1.5em; /* Reserve space even when hidden initially */
+    line-height: 1.5em;
+}
+
+#countdown-timer {
+    font-weight: 600;
+    color: var(--text-color); /* Use main text color for the number */
+    min-width: 2ch; /* Reserve space for 2 digits */
+    display: inline-block; /* Allows min-width */
+    text-align: right;
+}
+
+/* Letter-Specific Colors */
+.ball.B, .current-ball-display.B { background-color: red; color: white; }
+.ball.I, .current-ball-display.I { background-color: yellow; color: black; }
+.ball.N, .current-ball-display.N { background-color: limegreen; color: black; } /* Using limegreen for better contrast */
+.ball.G, .current-ball-display.G { background-color: purple; color: white; }
+.ball.O, .current-ball-display.O { background-color: blue; color: white; }
+
+/* Ensure current ball gradient works with new colors */
+.current-ball-display.B { background: linear-gradient(145deg, red, color-mix(in srgb, red 80%, black)); }
+.current-ball-display.I { background: linear-gradient(145deg, yellow, color-mix(in srgb, yellow 80%, black)); }
+.current-ball-display.N { background: linear-gradient(145deg, limegreen, color-mix(in srgb, limegreen 80%, black)); }
+.current-ball-display.G { background: linear-gradient(145deg, purple, color-mix(in srgb, purple 80%, black)); }
+.current-ball-display.O { background: linear-gradient(145deg, blue, color-mix(in srgb, blue 80%, black)); }
+
+/* Override default ball background */
+.ball {
+    background-color: var(--ball-bg); /* Default if no letter class matches? Should not happen */
+}
+
+/* General style adjustments for called balls */
+.ball.called {
+    opacity: 0.8; /* Keep slightly faded */
+    font-weight: 400; /* Less emphasis */
+    /* background-color and color will be overridden by specific letter rules below */
+}
+
+/* Darker colors for called balls */
+.ball.called.B { background-color: darkred; color: white; }
+.ball.called.I { background-color: #B8860B; color: white; } /* Using DarkGoldenrod with white text */
+.ball.called.N { background-color: forestgreen; color: white; }
+.ball.called.G { background-color: darkmagenta; color: white; }
+.ball.called.O { background-color: darkblue; color: white; }
+
+
+/* Large Balls Mode Styles */
+body.large-balls-mode {
+    /* Significantly increase ball sizes */
+    --ball-size: 80px;
+    --ball-font-size: 32px;
+    --current-ball-size: 220px;
+    --current-ball-font-size: 80px;
+}
+
+/* Adjust grid gap for large balls mode */
+body.large-balls-mode .ball-grid {
+    gap: 15px; /* Increase gap slightly */
+}
+
+/* Adjust current ball letter size in large mode */
+body.large-balls-mode .current-ball-display span.letter {
+    font-size: 0.35em; /* May need further adjustment */
+}
+
+/* Adjust regular ball letter size in large mode */
+body.large-balls-mode .ball span.letter {
+    font-size: 0.55em; /* May need further adjustment */
 }
