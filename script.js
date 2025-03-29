@@ -30,6 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let countdownValue = 0; // Stores the current countdown seconds
     let drawBallTimeoutId = null; // Timeout for the next ball draw (alternative to interval)
     let currentUtterance = null;
+    let wakeLockSentinel = null; // Screen Wake Lock sentinel
 
     // Settings State
     let voices = [];
@@ -147,6 +148,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     function resetGame() {
+        releaseWakeLock(); // Release lock on reset
         // Clear both potential timers/intervals
         if (intervalId) clearInterval(intervalId);
         if (drawBallTimeoutId) clearTimeout(drawBallTimeoutId);
@@ -304,6 +306,40 @@ document.addEventListener('DOMContentLoaded', () => {
         speechSynthesis.speak(currentUtterance);
     }
 
+    // --- Screen Wake Lock ---
+
+    // Function to request the screen wake lock
+    const requestWakeLock = async () => {
+        if ('wakeLock' in navigator) {
+            try {
+                wakeLockSentinel = await navigator.wakeLock.request('screen');
+                wakeLockSentinel.addEventListener('release', () => {
+                    console.log('Screen Wake Lock released:', wakeLockSentinel);
+                    wakeLockSentinel = null; // Sentinel is released when screen locks or visibility changes
+                });
+                console.log('Screen Wake Lock acquired:', wakeLockSentinel);
+            } catch (err) {
+                console.error(`${err.name}, ${err.message}`);
+            }
+        } else {
+            console.log('Screen Wake Lock API not supported.');
+        }
+    };
+
+    // Function to release the screen wake lock
+    const releaseWakeLock = async () => {
+        if (wakeLockSentinel !== null) {
+            try {
+                await wakeLockSentinel.release();
+                // Listener should set wakeLockSentinel to null automatically
+                console.log('Screen Wake Lock released programmatically.');
+            } catch (err) {
+                console.error(`${err.name}, ${err.message}`);
+            }
+        }
+    };
+
+
     // --- Settings Management ---
 
     function loadSettings() {
@@ -459,10 +495,12 @@ document.addEventListener('DOMContentLoaded', () => {
         currentUtterance = null;
         // Keep the current countdown value displayed, or reset? Let's reset for clarity.
         // countdownTimerSpan.textContent = '--'; // Or show paused state? Keep value for now.
+        releaseWakeLock(); // Release lock on pause
     }
 
     function stopGame() {
         console.log("stopGame called.");
+        releaseWakeLock(); // Release lock on stop
         // Clear the countdown interval
         if (intervalId) clearInterval(intervalId);
         intervalId = null;
@@ -502,6 +540,7 @@ document.addEventListener('DOMContentLoaded', () => {
                      startPauseButton.disabled = false;
                      isRunning = true; // Set running state
                      startPauseButton.textContent = 'Pause'; // Update button text
+                     requestWakeLock(); // Request lock on start/resume
 
                      // If calledBalls is empty, it's a fresh start: draw the first ball.
                      // drawBall() will then call startCountdown() for the *next* ball.
@@ -588,6 +627,19 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Removed large balls toggle listener
+
+    // Handle page visibility changes for Wake Lock
+    document.addEventListener('visibilitychange', async () => {
+        if (wakeLockSentinel !== null && document.visibilityState === 'hidden') {
+            console.log('Page hidden, releasing wake lock.');
+            // Release the lock, but keep isRunning state as is.
+            // The lock will be re-acquired if the page becomes visible again while isRunning is true.
+            await releaseWakeLock(); // Release but don't change game state
+        } else if (isRunning && document.visibilityState === 'visible') {
+            console.log('Page visible and game is running, re-acquiring wake lock.');
+            await requestWakeLock(); // Re-acquire lock if game was running
+        }
+    });
 
 
     // --- Initial Load ---
