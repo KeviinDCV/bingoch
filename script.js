@@ -238,7 +238,8 @@ document.addEventListener('DOMContentLoaded', () => {
         currentUtterance.onerror = (event) => { console.error('Utterance 1 error', event); currentUtterance = null; };
 
         let textToSpeakSecond = null;
-        if (repeatDigitsEnabled) { textToSpeakSecond = `${letter}, ${numberToWords(number)}`; }
+        // Modified: Remove letter from the digit repetition
+        if (repeatDigitsEnabled) { textToSpeakSecond = numberToWords(number); }
         else if (repeatNumberEnabled) { textToSpeakSecond = textToSpeakNormal; }
 
         if (textToSpeakSecond) {
