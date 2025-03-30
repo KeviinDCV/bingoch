@@ -21,7 +21,7 @@
 
     /* Increased sizes by ~25% */
     --ball-size: 50px;
-    --ball-font-size: 20px;
+    --ball-font-size: 18px; /* Reduced font size for better fit */
     --current-ball-size: 138px;
     --current-ball-font-size: 50px;
 
@@ -316,20 +316,28 @@ input[type="range"]::-moz-range-thumb {
 /* Recent Balls Slider */
 .recent-balls-container {
     margin: 2em 0;
-    text-align: center;
+    /* text-align: center; Removed, alignment handled by flex */
 }
 #recent-balls-slider {
     display: flex;
-    justify-content: center;
-    gap: 8px; /* Space between recent balls */
-    flex-wrap: wrap; /* Allow wrapping if needed */
+    /* justify-content: center; Changed to flex-start */
+    justify-content: flex-start; /* Align items to the start for scrolling */
+    gap: 10px; /* Increased gap slightly */
+    flex-wrap: nowrap; /* Prevent wrapping */
+    overflow-x: auto; /* Enable horizontal scrolling */
+    -webkit-overflow-scrolling: touch; /* Smoother scrolling on iOS */
+    padding: 10px 5px 15px 5px; /* Add padding (bottom for scrollbar space) */
     margin-top: 0.5em;
+    /* Add a subtle scrollbar style if desired */
+    scrollbar-width: thin; /* Firefox */
+    scrollbar-color: var(--secondary-color) var(--bg-color); /* Firefox */
 }
-/* Style balls within the slider (same size as main board balls) */
+/* Style balls within the slider (same size as main board balls by default) */
 #recent-balls-slider .ball {
     width: var(--ball-size); /* Use main ball size */
     height: var(--ball-size);
     font-size: var(--ball-font-size); /* Use main ball font size */
+    flex-shrink: 0; /* Prevent balls from shrinking */
 }
 #recent-balls-slider .ball span.letter {
     font-size: 0.65em; /* Match main ball letter size */
@@ -371,15 +379,9 @@ input[type="range"]::-moz-range-thumb {
     /* Styles for called balls (bright colors) are applied via specific letter classes below */
     opacity: 1; /* Ensure called balls are fully opaque */
     font-weight: 400;
-}
-
-/* Style for BINGO letters inside balls */
-.ball span.letter {
-    display: block;
-    font-size: 0.65em;
-    line-height: 1;
-    font-weight: 400;
-    opacity: 0.7;
+    /* Removed specific size override for recent balls on small mobile.
+       They will now inherit the 50px size defined for .ball in this media query,
+       making them larger and consistent with the main board. */
 }
 
 /* Responsive adjustments */
@@ -417,18 +419,18 @@ input[type="range"]::-moz-range-thumb {
         --current-ball-font-size: 32px;
         /* Keep ball size 50px for consistency, adjust grid */
         --ball-size: 50px;
-        --ball-font-size: 20px;
+        --ball-font-size: 18px; /* Adjusted font size here too */
     }
      .ball-grid {
         grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
         gap: 5px;
     }
     button { padding: 10px 20px; font-size: 14px; margin: 5px; }
-    /* Adjust recent slider balls on small mobile */
+    /* Explicitly set recent slider ball size on small mobile */
     #recent-balls-slider .ball {
-        width: 35px;
-        height: 35px;
-        font-size: 14px;
+        width: 50px; /* Ensure 50px size */
+        height: 50px;
+        font-size: 18px; /* Ensure proportional font size */
     }
 }
 

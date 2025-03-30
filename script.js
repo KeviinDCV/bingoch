@@ -159,7 +159,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updateRecentBallsSlider() {
         recentBallsSlider.innerHTML = '';
-        const recentBalls = calledBalls.slice(-10);
+        // Modified: Use all called balls instead of just the last 10
+        const recentBalls = calledBalls;
         recentBalls.reverse().forEach(ballNum => {
             const sliderBall = createBallElement(ballNum, true);
             recentBallsSlider.appendChild(sliderBall);
