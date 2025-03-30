@@ -10,7 +10,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const pitchValueSpan = document.getElementById('pitch-value');
     const intervalSlider = document.getElementById('interval-slider');
     const intervalValueSpan = document.getElementById('interval-value');
-    const ballBoardContainer = document.getElementById('ball-board'); // Renamed from remainingBallsContainer
+    const ballBoardContainer = document.getElementById('ball-board'); // Unified board
+    const recentBallsSlider = document.getElementById('recent-balls-slider'); // Recent slider
     const remainingCountSpan = document.getElementById('remaining-count');
     const themeToggleButton = document.getElementById('theme-toggle-button');
     const settingsToggle = document.querySelector('.settings-toggle');
@@ -18,17 +19,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const toggleIcon = document.querySelector('.toggle-icon');
     const letterCheckboxes = document.querySelectorAll('.letter-checkboxes input[type="checkbox"]');
     const countdownTimerSpan = document.getElementById('countdown-timer');
+    const repeatDigitsToggle = document.getElementById('repeat-digits-toggle');
+    const repeatNumberToggle = document.getElementById('repeat-number-toggle');
 
     // Game State
     let allBalls = [];
     let remainingBalls = [];
-    let calledBalls = []; // Stores balls in the order they are called
+    let calledBalls = [];
     let isRunning = false;
     let intervalId = null;
     let countdownValue = 0;
     let currentUtterance = null;
     let secondaryUtterance = null;
     let wakeLockSentinel = null;
+    let lastCalledBall = null; // To track the last ball for highlighting
 
     // Settings State
     let voices = [];
@@ -37,44 +41,29 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentPitch = 1;
     let currentInterval = 5;
     let activeLetters = { B: true, I: true, N: true, G: true, O: true };
+    let repeatDigitsEnabled = true;
+    let repeatNumberEnabled = false;
 
     // Letter Ranges
     const letterRanges = {
-        B: { min: 1, max: 15 },
-        I: { min: 16, max: 30 },
-        N: { min: 31, max: 45 },
-        G: { min: 46, max: 60 },
-        O: { min: 61, max: 75 }
+        B: { min: 1, max: 15 }, I: { min: 16, max: 30 }, N: { min: 31, max: 45 },
+        G: { min: 46, max: 60 }, O: { min: 61, max: 75 }
     };
 
     // --- Theme Management ---
     function applyTheme(theme) {
-        if (theme === 'dark') {
-            document.body.classList.add('dark-mode');
-            themeToggleButton.textContent = 'Modo Claro';
-        } else {
-            document.body.classList.remove('dark-mode');
-            themeToggleButton.textContent = 'Modo Oscuro';
-        }
+        document.body.classList.toggle('dark-mode', theme === 'dark');
+        themeToggleButton.textContent = theme === 'dark' ? 'Modo Claro' : 'Modo Oscuro';
         localStorage.setItem('bingoTheme', theme);
     }
-
     function toggleTheme() {
-        const currentTheme = document.body.classList.contains('dark-mode') ? 'dark' : 'light';
-        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        const newTheme = document.body.classList.contains('dark-mode') ? 'light' : 'dark';
         applyTheme(newTheme);
     }
-
     function loadInitialTheme() {
         const savedTheme = localStorage.getItem('bingoTheme');
         const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-        if (savedTheme) {
-            applyTheme(savedTheme);
-        } else if (prefersDark) {
-            applyTheme('dark');
-        } else {
-            applyTheme('light');
-        }
+        applyTheme(savedTheme || (prefersDark ? 'dark' : 'light'));
     }
 
     // --- Settings Collapse ---
@@ -83,115 +72,99 @@ document.addEventListener('DOMContentLoaded', () => {
         toggleIcon.textContent = isExpanded ? '−' : '+';
         toggleIcon.classList.toggle('expanded', isExpanded);
     }
-
     function initializeSettingsCollapse() {
          const isMobile = window.innerWidth < 768;
-         if (!isMobile) {
-             settingsContent.classList.add('expanded');
-             toggleIcon.textContent = '−';
-             toggleIcon.classList.add('expanded');
-         } else {
-             toggleIcon.textContent = '+';
-         }
+         settingsContent.classList.toggle('expanded', !isMobile);
+         toggleIcon.textContent = !isMobile ? '−' : '+';
+         toggleIcon.classList.toggle('expanded', !isMobile);
     }
 
     // --- Initialization ---
     function initializeGame() {
         loadSettings();
         generateBallList();
-        resetGame(); // Calls updateBallBoardUI
+        resetGame(); // Calls UI updates
         loadInitialTheme();
         initializeSettingsCollapse();
-        populateVoiceList(); // Now defined before being called
+        populateVoiceList();
         if (speechSynthesis.onvoiceschanged !== undefined) {
             speechSynthesis.onvoiceschanged = populateVoiceList;
         }
     }
 
-    // Generates the allBalls array based on activeLetters state
+    // --- Ball List Generation ---
     function generateBallList() {
         allBalls = [];
         for (const letter in activeLetters) {
             if (activeLetters[letter]) {
                 const range = letterRanges[letter];
-                for (let i = range.min; i <= range.max; i++) {
-                    allBalls.push(i);
-                }
+                for (let i = range.min; i <= range.max; i++) { allBalls.push(i); }
             }
         }
          if (allBalls.length === 0) {
              console.warn("No letters selected. Defaulting to all letters.");
              for (const letter in letterRanges) {
                  const range = letterRanges[letter];
-                 for (let i = range.min; i <= range.max; i++) {
-                     allBalls.push(i);
-                 }
+                 for (let i = range.min; i <= range.max; i++) { allBalls.push(i); }
              }
          }
-         // Ensure allBalls is sorted for the unified board display logic
          allBalls.sort((a, b) => a - b);
     }
 
+    // --- Game State Reset ---
     function resetGame() {
         releaseWakeLock();
         if (intervalId) clearInterval(intervalId);
-        if (speechSynthesis.speaking) {
-             speechSynthesis.cancel();
-        }
-        currentUtterance = null;
-        secondaryUtterance = null;
-        isRunning = false;
-        intervalId = null;
-        countdownValue = 0;
+        if (speechSynthesis.speaking) speechSynthesis.cancel();
+        currentUtterance = null; secondaryUtterance = null; isRunning = false;
+        intervalId = null; countdownValue = 0; lastCalledBall = null;
         startPauseButton.textContent = 'Start';
         startPauseButton.disabled = allBalls.length === 0;
         countdownTimerSpan.textContent = '--';
-        remainingBalls = [...allBalls];
-        calledBalls = []; // Reset called balls
+        remainingBalls = [...allBalls]; calledBalls = [];
         currentBallDisplay.innerHTML = '-';
         currentBallDisplay.className = 'current-ball-display';
-        updateBallBoardUI();
+        updateBallBoardUI(); // Update unified board
+        updateRecentBallsSlider(); // Update slider
         remainingCountSpan.textContent = remainingBalls.length;
     }
 
     // --- BINGO Logic ---
     function getBingoLetter(number) {
         for (const letter in letterRanges) {
-            const range = letterRanges[letter];
-            if (number >= range.min && number <= range.max) {
-                return letter;
-            }
+            if (number >= letterRanges[letter].min && number <= letterRanges[letter].max) return letter;
         }
         return '';
     }
 
     // --- UI Updates ---
     function updateBallBoardUI() {
-        ballBoardContainer.innerHTML = ''; // Clear the board
-
-        const calledElements = [];
-        const remainingElements = [];
-
-        // Create elements for called balls IN REVERSE ORDER (most recent first)
-        [...calledBalls].reverse().forEach(ballNum => {
-             calledElements.push(createBallElement(ballNum, true)); // Mark as called
+        ballBoardContainer.innerHTML = '';
+        allBalls.forEach(ballNum => {
+            const isCalled = calledBalls.includes(ballNum);
+            const element = createBallElement(ballNum, isCalled);
+            // Add highlight class only if this is the most recently called ball
+            if (isCalled && ballNum === lastCalledBall) {
+                element.classList.add('ball-highlight');
+                setTimeout(() => {
+                    if (element && element.parentNode) {
+                         element.classList.remove('ball-highlight');
+                    }
+                }, 1000);
+            }
+            ballBoardContainer.appendChild(element);
         });
-
-        // Create elements for remaining balls (sorted numerically)
-        // Filter allBalls to get only those NOT in calledBalls
-        const currentRemainingBalls = allBalls.filter(ballNum => !calledBalls.includes(ballNum));
-        currentRemainingBalls.forEach(ballNum => { // Already sorted because allBalls is sorted
-            remainingElements.push(createBallElement(ballNum, false)); // Mark as not called
-        });
-
-        // Append called balls first (most recent first), then remaining balls
-        calledElements.forEach(el => ballBoardContainer.appendChild(el));
-        remainingElements.forEach(el => ballBoardContainer.appendChild(el));
-
-        // Update remaining count separately
-        remainingCountSpan.textContent = remainingBalls.length; // Use the state variable remainingBalls count
+        remainingCountSpan.textContent = remainingBalls.length;
     }
 
+    function updateRecentBallsSlider() {
+        recentBallsSlider.innerHTML = '';
+        const recentBalls = calledBalls.slice(-10);
+        recentBalls.reverse().forEach(ballNum => {
+            const sliderBall = createBallElement(ballNum, true);
+            recentBallsSlider.appendChild(sliderBall);
+        });
+    }
 
     function createBallElement(number, isCalled = false) {
         const ball = document.createElement('div');
@@ -216,110 +189,72 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Speech Synthesis ---
     function populateVoiceList() {
-        voices = speechSynthesis.getVoices();
+        try { voices = speechSynthesis.getVoices(); }
+        catch (error) { console.error("Error getting voices:", error); voices = []; }
         const previouslySelectedName = selectedVoice ? selectedVoice.name : null;
         const previouslySelectedLang = selectedVoice ? selectedVoice.lang : null;
         voiceSelect.innerHTML = '';
-
-        voices.forEach((voice, i) => {
-            if (voice.lang.startsWith('es') || voices.filter(v => v.lang.startsWith('es')).length === 0) {
-                const option = document.createElement('option');
-                option.textContent = `${voice.name} (${voice.lang})`;
-                option.setAttribute('data-lang', voice.lang);
-                option.setAttribute('data-name', voice.name);
-                option.value = i;
-                voiceSelect.appendChild(option);
-            }
+        const spanishVoices = voices.filter(voice => voice.lang.startsWith('es'));
+        const voicesToDisplay = spanishVoices.length > 0 ? spanishVoices : voices;
+        voicesToDisplay.forEach((voice) => {
+            const originalIndex = voices.indexOf(voice);
+            const option = document.createElement('option');
+            option.textContent = `${voice.name} (${voice.lang})`;
+            option.setAttribute('data-lang', voice.lang);
+            option.setAttribute('data-name', voice.name);
+            option.value = originalIndex;
+            voiceSelect.appendChild(option);
         });
-
         const savedVoiceIndex = localStorage.getItem('bingoVoiceIndex');
         let voiceFound = false;
-
         if (savedVoiceIndex !== null && voices[savedVoiceIndex]) {
-            voiceSelect.value = savedVoiceIndex;
-            selectedVoice = voices[savedVoiceIndex];
-            voiceFound = true;
-        } else if (previouslySelectedName && previouslySelectedLang) {
+            const optionExists = Array.from(voiceSelect.options).some(opt => opt.value === savedVoiceIndex);
+            if (optionExists) { voiceSelect.value = savedVoiceIndex; voiceFound = true; }
+        }
+        if (!voiceFound && previouslySelectedName && previouslySelectedLang) {
              const matchingVoiceIndex = voices.findIndex(v => v.name === previouslySelectedName && v.lang === previouslySelectedLang);
              if (matchingVoiceIndex !== -1) {
-                 voiceSelect.value = matchingVoiceIndex;
-                 selectedVoice = voices[matchingVoiceIndex];
-                 voiceFound = true;
+                 const optionExists = Array.from(voiceSelect.options).some(opt => opt.value == matchingVoiceIndex);
+                 if (optionExists) { voiceSelect.value = matchingVoiceIndex; voiceFound = true; }
              }
         }
-
-        if (!voiceFound) {
-            const firstSpanishOption = Array.from(voiceSelect.options).find(opt => opt.getAttribute('data-lang').startsWith('es'));
-            if (firstSpanishOption) {
-                voiceSelect.value = firstSpanishOption.value;
-            } else if (voiceSelect.options.length > 0) {
-                voiceSelect.selectedIndex = 0;
-            }
-        }
-
-        if (voiceSelect.value && voices[voiceSelect.value]) {
-             selectedVoice = voices[voiceSelect.value];
-        } else {
-             selectedVoice = null;
-        }
+        if (!voiceFound && voiceSelect.options.length > 0) { voiceSelect.selectedIndex = 0; }
+        selectedVoice = (voiceSelect.value && voices[voiceSelect.value]) ? voices[voiceSelect.value] : null;
     }
 
-    const digitToWord = {
-        '0': 'cero', '1': 'uno', '2': 'dos', '3': 'tres', '4': 'cuatro',
-        '5': 'cinco', '6': 'seis', '7': 'siete', '8': 'ocho', '9': 'nueve'
-    };
-
-    function numberToWords(number) {
-        return String(number).split('').map(digit => digitToWord[digit]).join(', ');
-    }
+    const digitToWord = { '0': 'cero', '1': 'uno', '2': 'dos', '3': 'tres', '4': 'cuatro', '5': 'cinco', '6': 'seis', '7': 'siete', '8': 'ocho', '9': 'nueve' };
+    function numberToWords(number) { return String(number).split('').map(digit => digitToWord[digit]).join(', '); }
 
     function speakBall(number) {
-        if (!selectedVoice) {
-            console.warn("No voice selected. Cannot speak.");
-            return;
-        }
-        if (speechSynthesis.speaking) {
-            speechSynthesis.cancel();
-        }
-        currentUtterance = null;
-        secondaryUtterance = null;
+        if (!selectedVoice) { console.warn("No voice selected."); return; }
+        if (speechSynthesis.speaking) { speechSynthesis.cancel(); }
+        currentUtterance = null; secondaryUtterance = null;
 
         const letter = getBingoLetter(number);
         const textToSpeakNormal = `${letter} ${number}`;
-        const textToSpeakDigits = `${letter}, ${numberToWords(number)}`;
-
         currentUtterance = new SpeechSynthesisUtterance(textToSpeakNormal);
-        currentUtterance.voice = selectedVoice;
-        currentUtterance.rate = currentRate;
-        currentUtterance.pitch = currentPitch;
-        currentUtterance.lang = selectedVoice.lang;
+        currentUtterance.voice = selectedVoice; currentUtterance.rate = currentRate;
+        currentUtterance.pitch = currentPitch; currentUtterance.lang = selectedVoice.lang;
+        currentUtterance.onerror = (event) => { console.error('Utterance 1 error', event); currentUtterance = null; };
 
-        secondaryUtterance = new SpeechSynthesisUtterance(textToSpeakDigits);
-        secondaryUtterance.voice = selectedVoice;
-        secondaryUtterance.rate = currentRate;
-        secondaryUtterance.pitch = currentPitch;
-        secondaryUtterance.lang = selectedVoice.lang;
+        let textToSpeakSecond = null;
+        if (repeatDigitsEnabled) { textToSpeakSecond = `${letter}, ${numberToWords(number)}`; }
+        else if (repeatNumberEnabled) { textToSpeakSecond = textToSpeakNormal; }
 
-        currentUtterance.onerror = (event) => {
-            console.error('SpeechSynthesisUtterance (Normal) .onerror', event);
-            currentUtterance = null;
-        };
-        secondaryUtterance.onerror = (event) => {
-            console.error('SpeechSynthesisUtterance (Digits) .onerror', event);
-            secondaryUtterance = null;
-        };
-
-        currentUtterance.onend = () => {
-            currentUtterance = null;
-            if (secondaryUtterance) {
-                 speechSynthesis.speak(secondaryUtterance);
-            }
-        };
-
-        secondaryUtterance.onend = () => {
-             secondaryUtterance = null;
-        };
-
+        if (textToSpeakSecond) {
+            secondaryUtterance = new SpeechSynthesisUtterance(textToSpeakSecond);
+            secondaryUtterance.voice = selectedVoice; secondaryUtterance.rate = currentRate;
+            secondaryUtterance.pitch = currentPitch; secondaryUtterance.lang = selectedVoice.lang;
+            secondaryUtterance.onerror = (event) => { console.error('Utterance 2 error', event); secondaryUtterance = null; };
+            secondaryUtterance.onend = () => { secondaryUtterance = null; };
+            currentUtterance.onend = () => {
+                currentUtterance = null;
+                if (!speechSynthesis.speaking && secondaryUtterance) { speechSynthesis.speak(secondaryUtterance); }
+                else { secondaryUtterance = null; }
+            };
+        } else {
+            currentUtterance.onend = () => { currentUtterance = null; };
+        }
         speechSynthesis.speak(currentUtterance);
     }
 
@@ -327,32 +262,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const requestWakeLock = async () => {
         if ('wakeLock' in navigator) {
             try {
-                if (wakeLockSentinel) {
-                    await releaseWakeLock();
-                }
+                if (wakeLockSentinel) { await releaseWakeLock(); }
                 wakeLockSentinel = await navigator.wakeLock.request('screen');
                 wakeLockSentinel.addEventListener('release', () => {
-                    wakeLockSentinel = null;
-                    if (isRunning) {
-                        requestWakeLock();
-                    }
+                    wakeLockSentinel = null; if (isRunning) { requestWakeLock(); }
                 });
-            } catch (err) {
-                console.error(`Wake Lock request failed: ${err.name}, ${err.message}`);
-                wakeLockSentinel = null;
-            }
+            } catch (err) { console.error(`Wake Lock request failed: ${err.name}, ${err.message}`); wakeLockSentinel = null; }
         }
     };
-
     const releaseWakeLock = async () => {
         if (wakeLockSentinel !== null) {
-            const sentinelToRelease = wakeLockSentinel;
-            wakeLockSentinel = null;
-            try {
-                await sentinelToRelease.release();
-            } catch (err) {
-                console.error(`Wake Lock release failed: ${err.name}, ${err.message}`);
-            }
+            const sentinelToRelease = wakeLockSentinel; wakeLockSentinel = null;
+            try { await sentinelToRelease.release(); }
+            catch (err) { console.error(`Wake Lock release failed: ${err.name}, ${err.message}`); }
         }
     };
 
@@ -361,28 +283,17 @@ document.addEventListener('DOMContentLoaded', () => {
         currentRate = parseFloat(localStorage.getItem('bingoRate') || '1');
         currentPitch = parseFloat(localStorage.getItem('bingoPitch') || '1');
         currentInterval = parseInt(localStorage.getItem('bingoInterval') || '5', 10);
-        rateSlider.value = currentRate;
-        rateValueSpan.textContent = currentRate;
-        pitchSlider.value = currentPitch;
-        pitchValueSpan.textContent = currentPitch;
-        intervalSlider.value = currentInterval;
-        intervalValueSpan.textContent = currentInterval;
-
+        rateSlider.value = currentRate; rateValueSpan.textContent = currentRate;
+        pitchSlider.value = currentPitch; pitchValueSpan.textContent = currentPitch;
+        intervalSlider.value = currentInterval; intervalValueSpan.textContent = currentInterval;
         const savedLetters = localStorage.getItem('bingoActiveLetters');
-        if (savedLetters) {
-            try {
-                activeLetters = JSON.parse(savedLetters);
-            } catch (e) {
-                console.error("Failed to parse saved active letters", e);
-                activeLetters = { B: true, I: true, N: true, G: true, O: true };
-            }
-        } else {
-             activeLetters = { B: true, I: true, N: true, G: true, O: true };
-        }
-        letterCheckboxes.forEach(checkbox => {
-            const letter = checkbox.dataset.letter;
-            checkbox.checked = activeLetters[letter];
-        });
+        try { activeLetters = savedLetters ? JSON.parse(savedLetters) : { B: true, I: true, N: true, G: true, O: true }; }
+        catch (e) { console.error("Parse error letters", e); activeLetters = { B: true, I: true, N: true, G: true, O: true }; }
+        letterCheckboxes.forEach(cb => { cb.checked = activeLetters[cb.dataset.letter]; });
+        repeatDigitsEnabled = localStorage.getItem('bingoRepeatDigits') !== 'false';
+        repeatNumberEnabled = localStorage.getItem('bingoRepeatNumber') === 'true';
+        repeatDigitsToggle.checked = repeatDigitsEnabled;
+        repeatNumberToggle.checked = repeatNumberEnabled;
     }
 
     function saveSettings() {
@@ -391,31 +302,26 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem('bingoInterval', currentInterval);
         if (selectedVoice) {
             const voiceIndex = voices.findIndex(v => v.name === selectedVoice.name && v.lang === selectedVoice.lang);
-            if (voiceIndex !== -1) {
-                localStorage.setItem('bingoVoiceIndex', voiceIndex);
-            }
+            if (voiceIndex !== -1) localStorage.setItem('bingoVoiceIndex', voiceIndex);
         }
         localStorage.setItem('bingoActiveLetters', JSON.stringify(activeLetters));
+        localStorage.setItem('bingoRepeatDigits', repeatDigitsEnabled);
+        localStorage.setItem('bingoRepeatNumber', repeatNumberEnabled);
     }
 
     // --- Game Flow ---
     function drawBall() {
-        if (remainingBalls.length === 0) {
-            stopGame();
-            return;
-        }
+        if (remainingBalls.length === 0) { stopGame(); return; }
         const randomIndex = Math.floor(Math.random() * remainingBalls.length);
         const drawnBall = remainingBalls.splice(randomIndex, 1)[0];
-        calledBalls.push(drawnBall); // Add to the end of the called list
+        calledBalls.push(drawnBall);
+        lastCalledBall = drawnBall; // Track last called for highlight
         displayCurrentBall(drawnBall);
-        updateBallBoardUI(); // Update board (will show called in reverse order)
+        updateBallBoardUI(); // Update unified board
+        updateRecentBallsSlider(); // Update slider
         speakBall(drawnBall);
-
-        if (remainingBalls.length > 0 && isRunning) {
-            startCountdown();
-        } else if (remainingBalls.length === 0) {
-            stopGame();
-        }
+        if (remainingBalls.length > 0 && isRunning) { startCountdown(); }
+        else if (remainingBalls.length === 0) { stopGame(); }
     }
 
     function startCountdown(resumeValue = null) {
@@ -423,143 +329,72 @@ document.addEventListener('DOMContentLoaded', () => {
         intervalId = null;
         countdownValue = (resumeValue !== null) ? Math.max(0, resumeValue) : currentInterval;
         countdownTimerSpan.textContent = countdownValue;
-
-        if (countdownValue <= 0 && isRunning) {
-            setTimeout(() => { if (isRunning) drawBall(); }, 0);
-            return;
-        }
-
+        if (countdownValue <= 0 && isRunning) { setTimeout(() => { if (isRunning) drawBall(); }, 0); return; }
         if (isRunning && countdownValue > 0) {
             intervalId = setInterval(() => {
                 countdownValue--;
                 countdownTimerSpan.textContent = countdownValue;
                 if (countdownValue <= 0) {
-                    clearInterval(intervalId);
-                    intervalId = null;
-                    if (isRunning) {
-                        drawBall();
-                    }
+                    clearInterval(intervalId); intervalId = null;
+                    if (isRunning) drawBall();
                 }
             }, 1000);
         }
     }
 
     function pauseGame() {
-        if (!isRunning) return;
-        isRunning = false;
+        if (!isRunning) return; isRunning = false;
         startPauseButton.textContent = 'Start';
-        if (intervalId) clearInterval(intervalId);
-        intervalId = null;
-        if (speechSynthesis.speaking) {
-             speechSynthesis.cancel();
-        }
-        currentUtterance = null;
-        secondaryUtterance = null;
+        if (intervalId) clearInterval(intervalId); intervalId = null;
+        if (speechSynthesis.speaking) speechSynthesis.cancel();
+        currentUtterance = null; secondaryUtterance = null;
         releaseWakeLock();
     }
 
     function stopGame() {
         releaseWakeLock();
-        if (intervalId) clearInterval(intervalId);
-        intervalId = null;
-        if (speechSynthesis.speaking) {
-             speechSynthesis.cancel();
-        }
-        currentUtterance = null;
-        secondaryUtterance = null;
-        isRunning = false;
+        if (intervalId) clearInterval(intervalId); intervalId = null;
+        if (speechSynthesis.speaking) speechSynthesis.cancel();
+        currentUtterance = null; secondaryUtterance = null; isRunning = false;
         startPauseButton.textContent = 'Start';
         countdownTimerSpan.textContent = '--';
-        if (remainingBalls.length === 0) {
-             startPauseButton.disabled = true;
-        }
+        if (remainingBalls.length === 0) startPauseButton.disabled = true;
     }
 
     // --- Event Listeners ---
     startPauseButton.addEventListener('click', () => {
-        if (isRunning) {
-            pauseGame();
-        } else {
+        if (isRunning) { pauseGame(); }
+        else {
              generateBallList();
              if (allBalls.length > 0) {
-                 if (calledBalls.length === 0) {
-                     remainingBalls = [...allBalls];
-                 } else {
-                     remainingBalls = allBalls.filter(ball => !calledBalls.includes(ball));
-                 }
-                 updateBallBoardUI();
-
+                 if (calledBalls.length === 0) { remainingBalls = [...allBalls]; lastCalledBall = null; }
+                 else { remainingBalls = allBalls.filter(ball => !calledBalls.includes(ball)); }
+                 updateBallBoardUI(); // Update board first
+                 updateRecentBallsSlider();
                  if (remainingBalls.length > 0) {
-                     startPauseButton.disabled = false;
-                     isRunning = true;
-                     startPauseButton.textContent = 'Pause';
-                     requestWakeLock();
-                     if (calledBalls.length === 0) {
-                         drawBall();
-                     } else {
-                         startCountdown(countdownValue);
-                     }
-                 } else {
-                      startPauseButton.disabled = true;
-                 }
-             } else {
-                 alert("No letters selected. Please select at least one letter in the settings.");
-                 startPauseButton.disabled = true;
-             }
+                     startPauseButton.disabled = false; isRunning = true;
+                     startPauseButton.textContent = 'Pause'; requestWakeLock();
+                     if (calledBalls.length === 0) { drawBall(); }
+                     else { startCountdown(countdownValue); }
+                 } else { startPauseButton.disabled = true; }
+             } else { alert("No letters selected."); startPauseButton.disabled = true; }
         }
     });
 
-    resetButton.addEventListener('click', () => {
-         generateBallList();
-         resetGame();
-    });
-
+    resetButton.addEventListener('click', () => { generateBallList(); resetGame(); });
     themeToggleButton.addEventListener('click', toggleTheme);
     settingsToggle.addEventListener('click', toggleSettings);
-
-    voiceSelect.addEventListener('change', (e) => {
-        selectedVoice = voices[e.target.value];
-        saveSettings();
-    });
-
-    rateSlider.addEventListener('input', (e) => {
-        currentRate = parseFloat(e.target.value);
-        rateValueSpan.textContent = currentRate;
-        saveSettings();
-    });
-
-    pitchSlider.addEventListener('input', (e) => {
-        currentPitch = parseFloat(e.target.value);
-        pitchValueSpan.textContent = currentPitch;
-        saveSettings();
-    });
-
-    intervalSlider.addEventListener('input', (e) => {
-        currentInterval = parseInt(e.target.value, 10);
-        intervalValueSpan.textContent = currentInterval;
-        saveSettings();
-        if (isRunning) {
-            pauseGame();
-        }
-    });
-
-    letterCheckboxes.forEach(checkbox => {
-        checkbox.addEventListener('change', (e) => {
-            const letter = e.target.dataset.letter;
-            activeLetters[letter] = e.target.checked;
-            saveSettings();
-            generateBallList();
-            resetGame();
-        });
-    });
-
+    voiceSelect.addEventListener('change', (e) => { selectedVoice = voices[e.target.value]; saveSettings(); });
+    rateSlider.addEventListener('input', (e) => { currentRate = parseFloat(e.target.value); rateValueSpan.textContent = currentRate; saveSettings(); });
+    pitchSlider.addEventListener('input', (e) => { currentPitch = parseFloat(e.target.value); pitchValueSpan.textContent = currentPitch; saveSettings(); });
+    intervalSlider.addEventListener('input', (e) => { currentInterval = parseInt(e.target.value, 10); intervalValueSpan.textContent = currentInterval; saveSettings(); if (isRunning) pauseGame(); });
+    letterCheckboxes.forEach(cb => { cb.addEventListener('change', (e) => { activeLetters[e.target.dataset.letter] = e.target.checked; saveSettings(); generateBallList(); resetGame(); }); });
+    repeatDigitsToggle.addEventListener('change', (e) => { repeatDigitsEnabled = e.target.checked; saveSettings(); });
+    repeatNumberToggle.addEventListener('change', (e) => { repeatNumberEnabled = e.target.checked; saveSettings(); });
     document.addEventListener('visibilitychange', async () => {
         if (!('wakeLock' in navigator)) return;
-        if (wakeLockSentinel !== null && document.visibilityState === 'hidden') {
-            await releaseWakeLock();
-        } else if (isRunning && document.visibilityState === 'visible') {
-             await requestWakeLock();
-        }
+        if (wakeLockSentinel !== null && document.visibilityState === 'hidden') { await releaseWakeLock(); }
+        else if (isRunning && document.visibilityState === 'visible') { await requestWakeLock(); }
     });
 
     // --- Initial Load ---

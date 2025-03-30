@@ -71,7 +71,7 @@ body {
     transition: background-color var(--transition-speed) ease;
 }
 
-h1, h2 {
+h1, h2, h3 { /* Added h3 */
     text-align: center;
     color: var(--primary-color);
     margin-bottom: 1.2em;
@@ -92,6 +92,14 @@ h2 {
     font-size: 1.5em;
     transition: color var(--transition-speed) ease, border-color var(--transition-speed) ease;
 }
+
+h3 { /* Style for slider title */
+    font-size: 1.1em;
+    color: var(--secondary-color);
+    margin-bottom: 0.5em;
+    border-bottom: none; /* No border for h3 */
+}
+
 
 /* Main Display & Current Ball */
 .main-display {
@@ -174,9 +182,8 @@ button:active {
 /* Settings Section */
 .settings {
     background-color: color-mix(in srgb, var(--bg-color) 85%, var(--text-color) 5%); /* Slightly different background */
-    /* padding: 25px; Applied to content now */
     border-radius: 8px;
-    margin-top: 2.5em; /* Added margin above settings */
+    margin-top: 2.5em;
     margin-bottom: 2.5em;
     border: 1px solid var(--border-color);
     transition: background-color var(--transition-speed) ease, border-color var(--transition-speed) ease;
@@ -187,9 +194,9 @@ button:active {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 15px 25px; /* Padding on the toggle itself */
-    margin: 0; /* Reset margin */
-    border-bottom: none; /* Remove default h2 border */
+    padding: 15px 25px;
+    margin: 0;
+    border-bottom: none;
 }
 
 .settings-toggle:hover {
@@ -203,8 +210,8 @@ button:active {
 }
 
 .settings-content {
-    padding: 0 25px 25px 25px; /* Padding inside the content area */
-    max-height: 1000px; /* Large enough for content */
+    padding: 0 25px 25px 25px;
+    max-height: 1000px;
     overflow: hidden;
     transition: max-height 0.5s ease-out, padding 0.5s ease-out;
 }
@@ -213,13 +220,11 @@ button:active {
     max-height: 0;
     padding-top: 0;
     padding-bottom: 0;
-    /* border-top: 1px solid var(--border-color); Add border when collapsed */
 }
 
 .settings-toggle .toggle-icon.expanded {
-     transform: rotate(45deg); /* Change '+' to 'x' or rotate */
+     transform: rotate(45deg);
 }
-
 
 .setting-item {
     margin-bottom: 18px;
@@ -229,30 +234,40 @@ button:active {
 }
 
 .setting-item label {
-    min-width: 160px; /* Ensure alignment */
+    min-width: 160px;
     font-weight: 600;
     color: var(--secondary-color);
     transition: color var(--transition-speed) ease;
 }
 
 .setting-item select,
-.setting-item input[type="range"] {
-    flex-grow: 1;
+.setting-item input[type="range"],
+.setting-item input[type="checkbox"] { /* Apply consistent styling */
     padding: 8px 10px;
     border: 1px solid var(--border-color);
     border-radius: 5px;
-    background-color: var(--card-bg); /* Match card background */
+    background-color: var(--card-bg);
     color: var(--text-color);
     transition: background-color var(--transition-speed) ease, border-color var(--transition-speed) ease, color var(--transition-speed) ease;
 }
+.setting-item input[type="range"] {
+    flex-grow: 1; /* Allow range to grow */
+}
+.setting-item input[type="checkbox"] {
+    padding: 0; /* Reset padding for checkbox */
+    width: 18px; /* Explicit size */
+    height: 18px;
+    cursor: pointer;
+}
+
 
 .letter-toggle .letter-checkboxes {
     display: flex;
-    gap: 15px; /* Space between checkboxes */
-    flex-wrap: wrap; /* Allow wrapping on small screens */
+    gap: 15px;
+    flex-wrap: wrap;
 }
 
-.letter-toggle label { /* Style for individual checkbox labels */
+.letter-toggle label {
     display: inline-flex;
     align-items: center;
     gap: 5px;
@@ -286,30 +301,58 @@ input[type="range"]::-moz-range-thumb {
     background: var(--primary-color);
     border-radius: 50%;
     cursor: pointer;
-    border: none; /* Reset default */
+    border: none;
     transition: background-color var(--transition-speed) ease;
 }
 
-/* Ball Grids */
+/* Ball Grids (History & Remaining) */
 .ball-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(var(--ball-size), 1fr));
-    gap: 10px; /* Slightly more gap */
+    gap: 10px;
     margin-top: 1.5em;
 }
+
+/* Recent Balls Slider */
+.recent-balls-container {
+    margin: 2em 0;
+    text-align: center;
+}
+#recent-balls-slider {
+    display: flex;
+    justify-content: center;
+    gap: 8px; /* Space between recent balls */
+    flex-wrap: wrap; /* Allow wrapping if needed */
+    margin-top: 0.5em;
+}
+/* Style balls within the slider (same size as main board balls) */
+#recent-balls-slider .ball {
+    width: var(--ball-size); /* Use main ball size */
+    height: var(--ball-size);
+    font-size: var(--ball-font-size); /* Use main ball font size */
+}
+#recent-balls-slider .ball span.letter {
+    font-size: 0.65em; /* Match main ball letter size */
+}
+
 
 /* Adjust grid for smaller balls on mobile */
 @media (max-width: 480px) {
     .ball-grid {
-        grid-template-columns: repeat(auto-fill, minmax(30px, 1fr)); /* Even smaller min size */
-        gap: 5px; /* Tighter gap */
+        grid-template-columns: repeat(auto-fill, minmax(30px, 1fr));
+        gap: 5px;
+    }
+    /* Adjust recent slider balls on small mobile (keep same as main board mobile) */
+    #recent-balls-slider .ball {
+        /* Styles are inherited from the main .ball rule within this media query */
+        /* No specific override needed unless different size desired */
     }
 }
 
 
 .ball {
     display: flex;
-    flex-direction: column; /* Stack letter and number */
+    flex-direction: column;
     align-items: center;
     justify-content: center;
     width: var(--ball-size);
@@ -325,16 +368,15 @@ input[type="range"]::-moz-range-thumb {
 }
 
 .ball.called {
-    background-color: var(--ball-called-bg);
-    color: var(--ball-called-text);
-    opacity: 0.8; /* Slightly less faded */
-    font-weight: 400; /* Less emphasis */
+    /* Styles for called balls (bright colors) are applied via specific letter classes below */
+    opacity: 1; /* Ensure called balls are fully opaque */
+    font-weight: 400;
 }
 
 /* Style for BINGO letters inside balls */
 .ball span.letter {
     display: block;
-    font-size: 0.65em; /* Smaller font size for the letter */
+    font-size: 0.65em;
     line-height: 1;
     font-weight: 400;
     opacity: 0.7;
@@ -342,109 +384,58 @@ input[type="range"]::-moz-range-thumb {
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
-    .container {
-        padding: 20px 15px; /* Less horizontal padding */
-    }
-    h1 {
-        font-size: 2em;
-    }
-    h2 {
-    font-size: 1.3em;
-    }
-    /* Apply desktop ball sizes to mobile view (768px and below) */
+    .container { padding: 20px 15px; }
+    h1 { font-size: 2em; }
+    h2 { font-size: 1.3em; }
     :root {
-        /* Keep current ball slightly smaller than desktop for better fit */
-        --current-ball-size: 110px; /* Reverted from 90px, but smaller than desktop's 138px */
-        --current-ball-font-size: 40px; /* Reverted from 32px, smaller than desktop's 50px */
-        /* Use desktop's regular ball size */
+        --current-ball-size: 110px;
+        --current-ball-font-size: 40px;
         --ball-size: 50px;
         --ball-font-size: 20px;
     }
     .ball-grid {
-        /* Adjust grid columns for 50px balls */
         grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
-        gap: 8px; /* Adjust gap */
+        gap: 8px;
     }
-    .setting-item {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-    .setting-item label {
-        min-width: auto;
-        margin-bottom: 5px;
-    }
-    .setting-item select {
-         width: 100%; /* Make select full width too */
-    }
-    /* Add padding to slider items on mobile */
-    .setting-item input[type="range"] {
-        width: calc(100% - 20px); /* Reduce width to allow padding */
-        margin: 0 10px; /* Add horizontal margin */
-    }
-    /* Adjust label alignment for sliders */
-     .setting-item label[for*="-slider"] {
-         width: 100%; /* Make label full width */
-         text-align: center; /* Center label text */
-         margin-bottom: 8px; /* Add space below label */
-     }
-
-
-    /* Collapse settings by default on mobile */
-    .settings-content.collapsible:not(.expanded) {
-        max-height: 0;
-        padding-top: 0;
-        padding-bottom: 0;
-    }
-    .settings-toggle {
-         padding: 10px 15px; /* Less padding on toggle */
-    }
-     .settings-content {
-         padding: 0 15px 15px 15px; /* Less padding inside */
-     }
-
-     /* Larger buttons on mobile */
-     .controls button {
-         padding: 12px 25px; /* Increase padding slightly */
-         margin: 8px 5px; /* More vertical margin */
-     }
+    .setting-item { flex-direction: column; align-items: flex-start; }
+    .setting-item label { min-width: auto; margin-bottom: 5px; }
+    .setting-item select, .setting-item input[type="checkbox"] { width: auto; } /* Allow checkbox to size naturally */
+    .setting-item input[type="range"] { width: calc(100% - 20px); margin: 0 10px; }
+    .setting-item label[for*="-slider"] { width: 100%; text-align: center; margin-bottom: 8px; }
+    .settings-content.collapsible:not(.expanded) { max-height: 0; padding-top: 0; padding-bottom: 0; }
+    .settings-toggle { padding: 10px 15px; }
+    .settings-content { padding: 0 15px 15px 15px; }
+    .controls button { padding: 12px 25px; margin: 8px 5px; }
 }
 
 @media (max-width: 480px) {
-    body {
-        padding: 5px; /* Less body padding */
-    }
-    .container {
-        padding: 15px 10px; /* Even less horizontal padding */
-    }
-    h1 {
-    font-size: 1.8em;
-    }
-    /* Apply desktop ball sizes to small mobile view (480px and below) */
+    body { padding: 5px; }
+    .container { padding: 15px 10px; }
+    h1 { font-size: 1.8em; }
     :root {
-        /* Keep current ball slightly smaller */
-        --current-ball-size: 90px; /* Smaller than 768px view */
-        --current-ball-font-size: 32px; /* Smaller than 768px view */
-        /* Use desktop's regular ball size */
+        --current-ball-size: 90px;
+        --current-ball-font-size: 32px;
+        /* Keep ball size 50px for consistency, adjust grid */
         --ball-size: 50px;
         --ball-font-size: 20px;
     }
      .ball-grid {
-        /* Adjust grid columns for 50px balls */
         grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
-        gap: 5px; /* Tighter gap for small screens */
+        gap: 5px;
     }
-    button {
-        padding: 10px 20px;
+    button { padding: 10px 20px; font-size: 14px; margin: 5px; }
+    /* Adjust recent slider balls on small mobile */
+    #recent-balls-slider .ball {
+        width: 35px;
+        height: 35px;
         font-size: 14px;
-        margin: 5px;
     }
-    /* .ball-grid adjustments moved to a separate block above */
 }
 
 /* Footer Styling */
 footer {
     text-align: center;
-    margin-top: 3em; /* Space above footer */
+    margin-top: 3em;
     padding-top: 1em;
     border-top: 1px solid var(--border-color);
     font-size: 0.9em;
@@ -452,35 +443,33 @@ footer {
     transition: color var(--transition-speed) ease, border-color var(--transition-speed) ease;
 }
 
-footer p {
-    margin: 0;
-}
+footer p { margin: 0; }
 
 /* Countdown Timer Styles */
 #countdown-container {
-    margin-top: 15px; /* Space below the current ball */
+    margin-top: 15px;
     font-size: 1.1em;
     color: var(--secondary-color);
     text-align: center;
     transition: color var(--transition-speed) ease;
-    height: 1.5em; /* Reserve space even when hidden initially */
+    height: 1.5em;
     line-height: 1.5em;
 }
 
 #countdown-timer {
     font-weight: 600;
-    color: var(--text-color); /* Use main text color for the number */
-    min-width: 2ch; /* Reserve space for 2 digits */
-    display: inline-block; /* Allows min-width */
+    color: var(--text-color);
+    min-width: 2ch;
+    display: inline-block;
     text-align: right;
 }
 
 /* Letter-Specific Colors (Dark and Faded for Remaining Balls) */
-.ball.B { background-color: maroon; color: white; opacity: 0.4; }
-.ball.I { background-color: #8B4513; color: white; opacity: 0.4; } /* SaddleBrown */
-.ball.N { background-color: darkgreen; color: white; opacity: 0.4; }
-.ball.G { background-color: purple; color: white; opacity: 0.4; }
-.ball.O { background-color: navy; color: white; opacity: 0.4; }
+.ball:not(.called).B { background-color: maroon; color: white; opacity: 0.4; }
+.ball:not(.called).I { background-color: #8B4513; color: white; opacity: 0.4; } /* SaddleBrown */
+.ball:not(.called).N { background-color: darkgreen; color: white; opacity: 0.4; }
+.ball:not(.called).G { background-color: purple; color: white; opacity: 0.4; }
+.ball:not(.called).O { background-color: navy; color: white; opacity: 0.4; }
 
 /* Current ball display keeps bright colors */
 .current-ball-display.B { background-color: red; color: white; }
@@ -496,23 +485,36 @@ footer p {
 .current-ball-display.G { background: linear-gradient(145deg, purple, color-mix(in srgb, purple 80%, black)); }
 .current-ball-display.O { background: linear-gradient(145deg, blue, color-mix(in srgb, blue 80%, black)); }
 
-/* Override default ball background */
-.ball {
-    background-color: var(--ball-bg); /* Default if no letter class matches? Should not happen */
+/* Override default ball background for remaining balls if no letter class matches */
+.ball:not(.called) {
+    background-color: var(--ball-bg);
+    color: var(--ball-text);
+    opacity: 0.4; /* Ensure default remaining are also faded */
 }
 
 /* General style adjustments for called balls - Ensure full opacity */
 .ball.called {
     opacity: 1; /* Make called balls fully opaque */
     font-weight: 400; /* Less emphasis */
-    /* background-color and color will be overridden by specific letter rules below */
 }
 
 /* Brighter colors for called balls (History) - Ensure full opacity */
-.ball.called.B { background-color: red; color: white; opacity: 1; }
-.ball.called.I { background-color: yellow; color: black; opacity: 1; }
-.ball.called.N { background-color: limegreen; color: black; opacity: 1; }
-.ball.called.G { background-color: purple; color: white; opacity: 1; }
-.ball.called.O { background-color: blue; color: white; opacity: 1; }
+.ball.called.B { background-color: red; color: white; }
+.ball.called.I { background-color: yellow; color: black; }
+.ball.called.N { background-color: limegreen; color: black; }
+.ball.called.G { background-color: purple; color: white; }
+.ball.called.O { background-color: blue; color: white; }
 
-/* Removed Large Balls Mode Styles */
+/* Highlight Animation */
+@keyframes highlight {
+    0% { box-shadow: 0 0 0 0 rgba(255, 255, 0, 0.7); } /* Yellow glow start */
+    70% { box-shadow: 0 0 0 10px rgba(255, 255, 0, 0); } /* Yellow glow expand */
+    100% { box-shadow: 0 0 0 0 rgba(255, 255, 0, 0); } /* Yellow glow end */
+}
+
+.ball-highlight {
+    animation: highlight 1s ease-out;
+    /* Ensure it stays on top if overlapping slightly during animation */
+    position: relative;
+    z-index: 1;
+}

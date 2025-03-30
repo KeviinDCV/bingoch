@@ -26,15 +26,21 @@
         <div class="theme-switcher">
              <button id="theme-toggle-button" aria-label="Cambiar tema">Modo Oscuro</button>
         </div>
+        <!-- Recent Balls Slider -->
+        <div class="recent-balls-container">
+             <h3>Últimas Llamadas:</h3>
+             <div id="recent-balls-slider">
+                 <!-- Last 10 called balls will appear here -->
+             </div>
+        </div>
 
         <!-- Settings section moved below -->
 
-        <!-- Removed History Section -->
-
-        <div class="board"> <!-- Renamed class for clarity -->
-            <h2>Tablero de Balotas (<span id="remaining-count">75</span> Restantes)</h2>
-            <div id="ball-board" class="ball-grid"> <!-- Renamed ID -->
-                <!-- Todas las balotas (llamadas y restantes) se mostrarán aquí -->
+        <!-- Unified Ball Board -->
+        <div class="board">
+            <h2>Tablero (<span id="remaining-count">75</span> Restantes)</h2>
+            <div id="ball-board" class="ball-grid">
+                <!-- All balls will appear here, styled based on called status -->
             </div>
         </div>
 
@@ -69,6 +75,14 @@
                         <label><input type="checkbox" id="toggle-G" data-letter="G" checked> G</label>
                         <label><input type="checkbox" id="toggle-O" data-letter="O" checked> O</label>
                     </div>
+                </div>
+                <div class="setting-item">
+                    <label for="repeat-digits-toggle">Repetir por Dígitos:</label>
+                    <input type="checkbox" id="repeat-digits-toggle" checked> <!-- Default checked? -->
+                </div>
+                 <div class="setting-item">
+                    <label for="repeat-number-toggle">Repetir Número:</label>
+                    <input type="checkbox" id="repeat-number-toggle">
                 </div>
                 <!-- Removed Large Balls Toggle -->
             </div>
