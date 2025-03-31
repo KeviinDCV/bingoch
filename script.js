@@ -157,14 +157,17 @@ document.addEventListener('DOMContentLoaded', () => {
         remainingCountSpan.textContent = remainingBalls.length;
     }
 
+    // Clears and rebuilds the slider (used only on reset)
     function updateRecentBallsSlider() {
         recentBallsSlider.innerHTML = '';
-        // Modified: Use all called balls instead of just the last 10
-        const recentBalls = calledBalls;
-        recentBalls.reverse().forEach(ballNum => {
+        // Build slider from scratch if needed (e.g., on reset)
+        const ballsToDisplay = [...calledBalls].reverse(); // Create reversed copy
+        ballsToDisplay.forEach(ballNum => {
             const sliderBall = createBallElement(ballNum, true);
-            recentBallsSlider.appendChild(sliderBall);
+            recentBallsSlider.appendChild(sliderBall); // Use appendChild for initial build
         });
+        // Ensure the slider scrolls back to the beginning
+        recentBallsSlider.scrollLeft = 0;
     }
 
     function createBallElement(number, isCalled = false) {
@@ -236,7 +239,14 @@ document.addEventListener('DOMContentLoaded', () => {
         currentUtterance = new SpeechSynthesisUtterance(textToSpeakNormal);
         currentUtterance.voice = selectedVoice; currentUtterance.rate = currentRate;
         currentUtterance.pitch = currentPitch; currentUtterance.lang = selectedVoice.lang;
-        currentUtterance.onerror = (event) => { console.error('Utterance 1 error', event); currentUtterance = null; };
+        currentUtterance.onerror = (event) => {
+            if (event.error !== 'interrupted') { // Only log non-interruption errors as critical
+                console.error('Utterance 1 error', event);
+            } else {
+                // console.warn('Utterance 1 interrupted (expected)'); // Optional: log as warning
+            }
+            currentUtterance = null;
+        };
 
         let textToSpeakSecond = null;
         // Modified: Remove letter from the digit repetition
@@ -247,7 +257,14 @@ document.addEventListener('DOMContentLoaded', () => {
             secondaryUtterance = new SpeechSynthesisUtterance(textToSpeakSecond);
             secondaryUtterance.voice = selectedVoice; secondaryUtterance.rate = currentRate;
             secondaryUtterance.pitch = currentPitch; secondaryUtterance.lang = selectedVoice.lang;
-            secondaryUtterance.onerror = (event) => { console.error('Utterance 2 error', event); secondaryUtterance = null; };
+            secondaryUtterance.onerror = (event) => {
+                if (event.error !== 'interrupted') { // Only log non-interruption errors as critical
+                     console.error('Utterance 2 error', event);
+                } else {
+                    // console.warn('Utterance 2 interrupted (expected)'); // Optional: log as warning
+                }
+                secondaryUtterance = null;
+            };
             secondaryUtterance.onend = () => { secondaryUtterance = null; };
             currentUtterance.onend = () => {
                 currentUtterance = null;
@@ -320,7 +337,16 @@ document.addEventListener('DOMContentLoaded', () => {
         lastCalledBall = drawnBall; // Track last called for highlight
         displayCurrentBall(drawnBall);
         updateBallBoardUI(); // Update unified board
-        updateRecentBallsSlider(); // Update slider
+
+        // --- Slider Update Modification ---
+        // Create the new ball element
+        const newSliderBall = createBallElement(drawnBall, true);
+        // Add it to the beginning of the slider
+        recentBallsSlider.prepend(newSliderBall);
+        // Ensure the slider scrolls to the beginning
+        recentBallsSlider.scrollLeft = 0;
+        // --- End Slider Update Modification ---
+
         speakBall(drawnBall);
         if (remainingBalls.length > 0 && isRunning) { startCountdown(); }
         else if (remainingBalls.length === 0) { stopGame(); }
