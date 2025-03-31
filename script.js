@@ -268,8 +268,19 @@ document.addEventListener('DOMContentLoaded', () => {
             secondaryUtterance.onend = () => { secondaryUtterance = null; };
             currentUtterance.onend = () => {
                 currentUtterance = null;
-                if (!speechSynthesis.speaking && secondaryUtterance) { speechSynthesis.speak(secondaryUtterance); }
-                else { secondaryUtterance = null; }
+                if (!speechSynthesis.speaking && secondaryUtterance) {
+                    // Add a short delay before speaking the repetition
+                    setTimeout(() => {
+                        // Check again in case something else started speaking during the delay
+                        if (!speechSynthesis.speaking && secondaryUtterance) {
+                            speechSynthesis.speak(secondaryUtterance);
+                        } else {
+                            secondaryUtterance = null; // Clear if we can't speak it
+                        }
+                    }, 400); // 400ms delay
+                } else {
+                     secondaryUtterance = null; // Clear if primary wasn't supposed to trigger it
+                }
             };
         } else {
             currentUtterance.onend = () => { currentUtterance = null; };
