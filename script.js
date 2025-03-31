@@ -269,7 +269,10 @@ document.addEventListener('DOMContentLoaded', () => {
             currentUtterance.onend = () => {
                 currentUtterance = null;
                 if (!speechSynthesis.speaking && secondaryUtterance) {
-                    // Add a short delay before speaking the repetition
+                    // Determine delay: longer for single digits (1-9), shorter otherwise
+                    const delay = (number >= 1 && number <= 9) ? 1500 : 400; // 1500ms for 1-9, 400ms for others
+
+                    // Add a conditional delay before speaking the repetition
                     setTimeout(() => {
                         // Check again in case something else started speaking during the delay
                         if (!speechSynthesis.speaking && secondaryUtterance) {
@@ -277,7 +280,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         } else {
                             secondaryUtterance = null; // Clear if we can't speak it
                         }
-                    }, 400); // 400ms delay
+                    }, delay);
                 } else {
                      secondaryUtterance = null; // Clear if primary wasn't supposed to trigger it
                 }
