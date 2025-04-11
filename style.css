@@ -16,14 +16,12 @@
     --ball-text: #495057;
     --ball-called-bg: #6c757d;
     --ball-called-text: #ffffff;
-    --current-ball-bg: var(--primary-color);
-    --current-ball-text: #ffffff;
+    /* Removed --current-ball-bg and --current-ball-text */
 
     /* Increased sizes by ~25% */
     --ball-size: 50px;
     --ball-font-size: 18px; /* Reduced font size for better fit */
-    --current-ball-size: 138px;
-    --current-ball-font-size: 50px;
+    /* Removed --current-ball-size and --current-ball-font-size */
 
     --transition-speed: 0.3s;
 }
@@ -44,8 +42,7 @@ body.dark-mode {
     --ball-text: #e0e0e0;
     --ball-called-bg: #909090;
     --ball-called-text: #1a1a1a;
-    --current-ball-bg: var(--primary-color);
-    --current-ball-text: #1a1a1a; /* Dark text on bright blue */
+    /* Removed --current-ball-bg and --current-ball-text */
 }
 
 /* General Styles & Transitions */
@@ -69,6 +66,7 @@ body {
     border-radius: 12px; /* More rounded */
     box-shadow: 0 4px 15px var(--shadow-color);
     transition: background-color var(--transition-speed) ease;
+    position: relative; /* Set positioning context for the theme button */
 }
 
 h1, h2, h3 { /* Added h3 */
@@ -82,13 +80,14 @@ h1, h2, h3 { /* Added h3 */
 h1 {
     font-size: 2.5em; /* Larger title */
     font-weight: 700;
+    margin-bottom: 0.5em; /* Reduced margin below h1 */
 }
 
 h2 {
     color: var(--secondary-color);
     border-bottom: 1px solid var(--border-color);
     padding-bottom: 0.6em;
-    margin-top: 2em;
+    margin-top: -0.5em; /* Adjusted from 2em */
     font-size: 1.5em;
     transition: color var(--transition-speed) ease, border-color var(--transition-speed) ease;
 }
@@ -104,46 +103,19 @@ h3 { /* Style for slider title */
 /* Main Display & Current Ball */
 .main-display {
     text-align: center;
-    margin-bottom: 2.5em;
+    margin-bottom: 1.5em; /* Reduced margin */
 }
 
-.current-ball-display {
-    display: inline-flex;
-    flex-direction: column; /* Stack letter and number */
-    align-items: center;
-    justify-content: center;
-    width: var(--current-ball-size);
-    height: var(--current-ball-size);
-    border-radius: 50%;
-    background: linear-gradient(145deg, var(--current-ball-bg), color-mix(in srgb, var(--current-ball-bg) 80%, black)); /* Subtle gradient */
-    color: var(--current-ball-text);
-    font-size: var(--current-ball-font-size);
-    font-weight: 700;
-    margin-top: 0.5em;
-    box-shadow: 0 6px 12px var(--shadow-color), inset 0 2px 4px rgba(255, 255, 255, 0.2); /* Inner highlight */
-    transition: background var(--transition-speed) ease, color var(--transition-speed) ease, transform var(--transition-speed) ease;
-    animation: popIn 0.5s ease-out forwards; /* Pop-in animation */
-    transform: scale(0); /* Start scaled down for animation */
-}
+/* Removed .current-ball-display styles */
 
-.current-ball-display span.letter {
-    font-size: 0.4em; /* Adjust relative size */
-    line-height: 1;
-    font-weight: 600;
-    opacity: 0.8;
-}
-
-@keyframes popIn {
-    to {
-        transform: scale(1);
-    }
-}
+/* Removed @keyframes popIn */
 
 /* Controls & Buttons */
-.controls, .theme-switcher {
+.controls { /* Removed .theme-switcher from this rule */
     text-align: center;
-    margin-bottom: 2em;
+    margin-bottom: 1.5em; /* Reduced margin */
 }
+/* Removed margin rule for theme button in .main-display */
 
 button {
     padding: 12px 28px; /* Slightly more padding */
@@ -170,21 +142,61 @@ button:active {
     box-shadow: 0 1px 3px var(--shadow-color);
 }
 
-#reset-button, #theme-toggle-button {
+#reset-button { /* Keep specific styles for reset button */
     background-color: var(--secondary-color);
-    color: white; /* Always white for secondary buttons */
+    color: white;
+}
+#reset-button:hover {
+     background-color: var(--secondary-color-darker);
 }
 
-#reset-button:hover, #theme-toggle-button:hover {
-    background-color: var(--secondary-color-darker);
+/* Theme Toggle Button Styling (Icon in Corner of Container) */
+#theme-toggle-button {
+    position: absolute; /* Position relative to container */
+    top: 30px; /* Align with container top padding */
+    right: 40px; /* Align with container right padding */
+    background: none; /* Remove background */
+    border: none; /* Remove border */
+    color: var(--text-color); /* Use text color for icon */
+    font-size: 24px; /* Adjust icon size */
+    padding: 5px; /* Small padding */
+    width: 40px; /* Fixed size */
+    height: 40px;
+    line-height: 1; /* Adjust line height for icon */
+    border-radius: 50%; /* Make it circular */
+    z-index: 1000; /* Ensure it's above other content */
+    box-shadow: none; /* Remove button shadow */
+    margin: 0; /* Reset margin */
+    transition: color var(--transition-speed) ease, transform 0.2s ease; /* Add transition */
+}
+
+#theme-toggle-button:hover {
+    background: none; /* No background on hover */
+    transform: scale(1.1); /* Slightly enlarge on hover */
+    box-shadow: none;
+}
+#theme-toggle-button:active {
+     transform: scale(1); /* Reset scale on active */
+     box-shadow: none;
+}
+
+
+/* Add icons using pseudo-elements */
+#theme-toggle-button::before {
+    content: '🌙'; /* Moon icon for light mode */
+    display: block;
+}
+
+body.dark-mode #theme-toggle-button::before {
+    content: '☀️'; /* Sun icon for dark mode */
 }
 
 /* Settings Section */
 .settings {
     background-color: color-mix(in srgb, var(--bg-color) 85%, var(--text-color) 5%); /* Slightly different background */
     border-radius: 8px;
-    margin-top: 2.5em;
-    margin-bottom: 2.5em;
+    margin-top: 1.5em; /* Reduced margin */
+    margin-bottom: 1.5em; /* Reduced margin */
     border: 1px solid var(--border-color);
     transition: background-color var(--transition-speed) ease, border-color var(--transition-speed) ease;
 }
@@ -234,7 +246,7 @@ button:active {
 }
 
 .setting-item label {
-    min-width: 160px;
+    /* min-width: 160px; Removed, will be handled specifically if needed */
     font-weight: 600;
     color: var(--secondary-color);
     transition: color var(--transition-speed) ease;
@@ -272,7 +284,36 @@ button:active {
     align-items: center;
     gap: 5px;
     cursor: pointer;
+    font-size: 0.9em; /* Smaller font for B, I, N, G, O labels */
 }
+
+/* Specific styles for the moved letter toggle */
+.letter-toggle {
+    justify-content: center; /* Center the items */
+    margin-bottom: 1.5em; /* Match other reduced margins */
+    flex-wrap: wrap; /* Allow wrapping on small screens */
+    /* Inherits display:flex from .setting-item */
+    margin-top: 0.5em; /* Add some space below h1 */
+    gap: 10px; /* Adjust gap for the main label and checkboxes container */
+}
+.letter-toggle > label:first-child { /* Target the "Letras Activas:" label */
+    min-width: auto; /* Remove min-width inherited from .setting-item label */
+    margin-bottom: 5px; /* Add some space below on wrap */
+    font-size: 0.9em; /* Smaller font */
+    text-align: center; /* Center the label text */
+    color: var(--text-color); /* Use main text color */
+    font-weight: normal; /* Normal weight */
+}
+.letter-toggle .letter-checkboxes {
+    gap: 10px; /* Reduce gap between checkboxes */
+    justify-content: center; /* Center checkboxes */
+    flex-basis: 100%; /* Ensure checkboxes container takes full width */
+}
+.letter-toggle input[type="checkbox"] {
+    width: 16px; /* Slightly smaller checkbox */
+    height: 16px;
+}
+
 
 /* Style range inputs */
 input[type="range"] {
@@ -310,12 +351,12 @@ input[type="range"]::-moz-range-thumb {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(var(--ball-size), 1fr));
     gap: 10px;
-    margin-top: 1.5em;
+    margin-top: 1em; /* Reduced margin */
 }
 
 /* Recent Balls Slider */
 .recent-balls-container {
-    margin: 2em 0;
+    margin: 1.5em 0 0.5em 0; /* Further reduced bottom margin again */
     /* text-align: center; Removed, alignment handled by flex */
 }
 #recent-balls-slider {
@@ -339,9 +380,7 @@ input[type="range"]::-moz-range-thumb {
     font-size: var(--ball-font-size); /* Use main ball font size */
     flex-shrink: 0; /* Prevent balls from shrinking */
 }
-#recent-balls-slider .ball span.letter {
-    font-size: 0.65em; /* Match main ball letter size */
-}
+/* Removed #recent-balls-slider .ball span.letter rule as the span is no longer generated */
 
 
 /* Adjust grid for smaller balls on mobile */
@@ -360,7 +399,7 @@ input[type="range"]::-moz-range-thumb {
 
 .ball {
     display: flex;
-    flex-direction: column;
+    flex-direction: column; /* Changed back from column */
     align-items: center;
     justify-content: center;
     width: var(--ball-size);
@@ -390,8 +429,7 @@ input[type="range"]::-moz-range-thumb {
     h1 { font-size: 2em; }
     h2 { font-size: 1.3em; }
     :root {
-        --current-ball-size: 110px;
-        --current-ball-font-size: 40px;
+        /* Removed --current-ball-size and --current-ball-font-size */
         --ball-size: 50px;
         --ball-font-size: 20px;
     }
@@ -408,6 +446,9 @@ input[type="range"]::-moz-range-thumb {
     .settings-toggle { padding: 10px 15px; }
     .settings-content { padding: 0 15px 15px 15px; }
     .controls button { padding: 12px 25px; margin: 8px 5px; }
+    /* Adjust letter toggle for mobile */
+    .letter-toggle { flex-direction: column; align-items: center; }
+    .letter-toggle > label:first-child { text-align: center; }
 }
 
 @media (max-width: 480px) {
@@ -415,8 +456,7 @@ input[type="range"]::-moz-range-thumb {
     .container { padding: 15px 10px; }
     h1 { font-size: 1.8em; }
     :root {
-        --current-ball-size: 90px;
-        --current-ball-font-size: 32px;
+        /* Removed --current-ball-size and --current-ball-font-size */
         /* Keep ball size 50px for consistency, adjust grid */
         --ball-size: 50px;
         --ball-font-size: 18px; /* Adjusted font size here too */
@@ -432,6 +472,13 @@ input[type="range"]::-moz-range-thumb {
         height: 50px;
         font-size: 18px; /* Ensure proportional font size */
     }
+    /* Adjust theme toggle position for smaller padding */
+    #theme-toggle-button {
+        top: 15px;
+        right: 15px;
+    }
+    /* Adjust letter toggle position for smaller padding */
+     .letter-toggle { margin-bottom: 1em; }
 }
 
 /* Footer Styling */
@@ -473,19 +520,7 @@ footer p { margin: 0; }
 .ball:not(.called).G { background-color: purple; color: white; opacity: 0.4; }
 .ball:not(.called).O { background-color: navy; color: white; opacity: 0.4; }
 
-/* Current ball display keeps bright colors */
-.current-ball-display.B { background-color: red; color: white; }
-.current-ball-display.I { background-color: yellow; color: black; }
-.current-ball-display.N { background-color: limegreen; color: black; }
-.current-ball-display.G { background-color: purple; color: white; }
-.current-ball-display.O { background-color: blue; color: white; }
-
-/* Ensure current ball gradient works with new colors */
-.current-ball-display.B { background: linear-gradient(145deg, red, color-mix(in srgb, red 80%, black)); }
-.current-ball-display.I { background: linear-gradient(145deg, yellow, color-mix(in srgb, yellow 80%, black)); }
-.current-ball-display.N { background: linear-gradient(145deg, limegreen, color-mix(in srgb, limegreen 80%, black)); }
-.current-ball-display.G { background: linear-gradient(145deg, purple, color-mix(in srgb, purple 80%, black)); }
-.current-ball-display.O { background: linear-gradient(145deg, blue, color-mix(in srgb, blue 80%, black)); }
+/* Removed current ball display color styles */
 
 /* Override default ball background for remaining balls if no letter class matches */
 .ball:not(.called) {

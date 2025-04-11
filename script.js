@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
     // DOM Elements
-    const currentBallDisplay = document.getElementById('current-ball');
+    // const currentBallDisplay = document.getElementById('current-ball'); // Removed
     const startPauseButton = document.getElementById('start-pause-button');
     const resetButton = document.getElementById('reset-button');
     const voiceSelect = document.getElementById('voice-select');
@@ -53,7 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Theme Management ---
     function applyTheme(theme) {
         document.body.classList.toggle('dark-mode', theme === 'dark');
-        themeToggleButton.textContent = theme === 'dark' ? 'Modo Claro' : 'Modo Oscuro';
+        // themeToggleButton.textContent = theme === 'dark' ? 'Modo Claro' : 'Modo Oscuro'; // Removed text update
         localStorage.setItem('bingoTheme', theme);
     }
     function toggleTheme() {
@@ -122,8 +122,9 @@ document.addEventListener('DOMContentLoaded', () => {
         startPauseButton.disabled = allBalls.length === 0;
         countdownTimerSpan.textContent = '--';
         remainingBalls = [...allBalls]; calledBalls = [];
-        currentBallDisplay.innerHTML = '-';
-        currentBallDisplay.className = 'current-ball-display';
+        // Removed references to currentBallDisplay
+        // currentBallDisplay.innerHTML = '-';
+        // currentBallDisplay.className = 'current-ball-display';
         updateBallBoardUI(); // Update unified board
         updateRecentBallsSlider(); // Update slider
         remainingCountSpan.textContent = remainingBalls.length;
@@ -173,14 +174,17 @@ document.addEventListener('DOMContentLoaded', () => {
     function createBallElement(number, isCalled = false) {
         const ball = document.createElement('div');
         ball.classList.add('ball');
-        const letter = getBingoLetter(number);
-        ball.innerHTML = `<span class="letter">${letter}</span>${number}`;
+        const letter = getBingoLetter(number); // Still need letter for class
+        // ball.innerHTML = `<span class="letter">${letter}</span>${number}`; // Original
+        ball.innerHTML = `${number}`; // Only number inside
         ball.dataset.number = number;
         if (isCalled) ball.classList.add('called');
-        if (letter) ball.classList.add(letter);
+        if (letter) ball.classList.add(letter); // Keep adding letter class for color styling
         return ball;
     }
 
+    // Removed displayCurrentBall function
+    /*
     function displayCurrentBall(number) {
         const letter = getBingoLetter(number);
         currentBallDisplay.innerHTML = `<span class="letter">${letter}</span>${number}`;
@@ -190,6 +194,7 @@ document.addEventListener('DOMContentLoaded', () => {
         void currentBallDisplay.offsetWidth;
         currentBallDisplay.style.animation = 'popIn 0.5s ease-out forwards';
     }
+    */
 
     // --- Speech Synthesis ---
     function populateVoiceList() {
@@ -349,7 +354,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const drawnBall = remainingBalls.splice(randomIndex, 1)[0];
         calledBalls.push(drawnBall);
         lastCalledBall = drawnBall; // Track last called for highlight
-        displayCurrentBall(drawnBall);
+        // displayCurrentBall(drawnBall); // Removed call
         updateBallBoardUI(); // Update unified board
 
         // --- Slider Update Modification ---

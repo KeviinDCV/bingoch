@@ -8,14 +8,29 @@
 </head>
 <body>
     <div class="container">
+        <!-- Moved theme toggle button inside container for absolute positioning relative to container -->
+        <button id="theme-toggle-button" aria-label="Cambiar tema"></button>
         <h1>Bingo Chavarro</h1>
 
+        <!-- Moved Letter Toggle Here -->
+        <div class="setting-item letter-toggle">
+             <label>Letras Activas:</label>
+             <div class="letter-checkboxes">
+                 <label><input type="checkbox" id="toggle-B" data-letter="B" checked> B</label>
+                 <label><input type="checkbox" id="toggle-I" data-letter="I" checked> I</label>
+                 <label><input type="checkbox" id="toggle-N" data-letter="N" checked> N</label>
+                 <label><input type="checkbox" id="toggle-G" data-letter="G" checked> G</label>
+                 <label><input type="checkbox" id="toggle-O" data-letter="O" checked> O</label>
+             </div>
+         </div>
+
         <div class="main-display">
-            <h2>Balota Actual</h2>
-            <div id="current-ball" class="current-ball-display">-</div>
+            <!-- Removed title -->
+            <!-- Removed current ball display -->
             <div id="countdown-container">
                 Siguiente balota en: <span id="countdown-timer">--</span>s
             </div>
+            <!-- Theme toggle button moved outside -->
         </div>
 
         <div class="controls">
@@ -23,9 +38,9 @@
             <button id="reset-button">Ganador (Reset)</button>
         </div>
 
-        <div class="theme-switcher">
-             <button id="theme-toggle-button" aria-label="Cambiar tema">Modo Oscuro</button>
-        </div>
+        <!-- Letter Toggle moved up -->
+
+        <!-- Removed theme-switcher div -->
         <!-- Recent Balls Slider -->
         <div class="recent-balls-container">
              <h3>Últimas Llamadas:</h3>
@@ -66,16 +81,7 @@
                     <label for="interval-slider">Intervalo (segundos) (<span id="interval-value">5</span>):</label>
                     <input type="range" id="interval-slider" min="1" max="15" step="1" value="5">
                 </div>
-                <div class="setting-item letter-toggle">
-                    <label>Letras Activas:</label>
-                    <div class="letter-checkboxes">
-                        <label><input type="checkbox" id="toggle-B" data-letter="B" checked> B</label>
-                        <label><input type="checkbox" id="toggle-I" data-letter="I" checked> I</label>
-                        <label><input type="checkbox" id="toggle-N" data-letter="N" checked> N</label>
-                        <label><input type="checkbox" id="toggle-G" data-letter="G" checked> G</label>
-                        <label><input type="checkbox" id="toggle-O" data-letter="O" checked> O</label>
-                    </div>
-                </div>
+                <!-- Letter toggle moved out -->
                 <div class="setting-item">
                     <label for="repeat-digits-toggle">Repetir por Dígitos:</label>
                     <input type="checkbox" id="repeat-digits-toggle" checked> <!-- Default checked? -->
